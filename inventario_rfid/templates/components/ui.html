@@ -1,0 +1,30 @@
+{% macro section_header(title, subtitle='', action_url=None, action_label=None, action_class='btn btn-light btn-sm') -%}
+<div class="panel-header panel-header-structured">
+    <div>
+        <h3>{{ title }}</h3>
+        {% if subtitle %}
+        <p class="panel-subtitle">{{ subtitle }}</p>
+        {% endif %}
+    </div>
+    {% if action_url and action_label %}
+    <a href="{{ action_url }}" class="{{ action_class }}">{{ action_label }}</a>
+    {% endif %}
+</div>
+{%- endmacro %}
+
+{% macro empty_state(message, icon='bi-inbox') -%}
+<div class="empty-panel empty-panel-centered">
+    <div class="empty-icon"><i class="bi {{ icon }}"></i></div>
+    <div>{{ message }}</div>
+</div>
+{%- endmacro %}
+
+{% macro metric_card(label, value, caption='', variant='primary') -%}
+<article class="stat-card stat-card-{{ variant }}">
+    <span class="stat-label">{{ label }}</span>
+    <strong>{{ value }}</strong>
+    {% if caption %}
+    <small>{{ caption }}</small>
+    {% endif %}
+</article>
+{%- endmacro %}

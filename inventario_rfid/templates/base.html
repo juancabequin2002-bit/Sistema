@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}{{ PLATFORM_NAME }}{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Montserrat:wght@700;800&display=swap" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/styles.css') }}" rel="stylesheet">
+    {% if BRAND_FAVICON_EXISTS %}
+    <link rel="icon" href="{{ url_for('static', filename=BRAND_FAVICON_PATH) }}">
+    {% endif %}
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="app-shell">
+{% if current_user.is_authenticated %}
+<div class="app-bg-orb orb-a"></div>
+<div class="app-bg-orb orb-b"></div>
+<div class="layout">
+    <aside class="sidebar">
+        <div class="sidebar-top">
+            <div class="sidebar-brand">
+                {% if BRAND_LOGO_EXISTS %}
+                <img class="brand-full-logo" src="{{ url_for('static', filename=BRAND_LOGO_PATH) }}" alt="{{ PLATFORM_NAME }}">
+                <small class="sidebar-brand-tagline">{{ PLATFORM_TAGLINE }}</small>
+                {% else %}
+                <div class="brand-mark {% if BRAND_MARK_EXISTS %}brand-mark-image{% endif %}">
+                    {% if BRAND_MARK_EXISTS %}
+                    <img src="{{ url_for('static', filename=BRAND_MARK_PATH) }}" alt="{{ PLATFORM_NAME }}">
+                    {% else %}
+                    <i class="bi bi-broadcast-pin"></i>
+                    {% endif %}
+                </div>
+                <div>
+                    <strong>{{ PLATFORM_NAME }}</strong>
+                    <small>{{ PLATFORM_TAGLINE }}</small>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="sidebar-section">
+            <span class="sidebar-label">Operacion</span>
+            <nav class="sidebar-nav">
+                <a href="{{ url_for('dashboard') }}" class="{% if request.endpoint == 'dashboard' %}active{% endif %}">
+                    <i class="bi bi-grid-1x2"></i> Dashboard
+                </a>
+                <a href="{{ url_for('list_assets') }}" class="{% if request.endpoint in ['list_assets', 'create_asset', 'edit_asset', 'asset_detail', 'assign_asset', 'dispose_asset'] %}active{% endif %}">
+                    <i class="bi bi-box-seam"></i> Activos
+                </a>
+                <a href="{{ url_for('unified_scan') }}" class="{% if request.endpoint == 'unified_scan' %}active{% endif %}">
+                    <i class="bi bi-upc-scan"></i> Escanear
+                </a>
+                {% if current_user.role in [ROLE_ADMIN, ROLE_TECH] %}
+                <a href="{{ url_for('inventario_modo') }}" class="{% if request.endpoint == 'inventario_modo' %}active{% endif %}">
+                    <i class="bi bi-clipboard2-check"></i> Modo Inventario
+                </a>
+                {% endif %}
+                <a href="{{ url_for('list_maintenances') }}" class="{% if request.endpoint in ['list_maintenances', 'create_maintenance'] %}active{% endif %}">
+                    <i class="bi bi-tools"></i> Mantenimientos
+                </a>
+                <a href="{{ url_for('list_documents') }}" class="{% if request.endpoint in ['list_documents', 'upload_document'] %}active{% endif %}">
+                    <i class="bi bi-folder2-open"></i> Archivos y documentos
+                </a>
+            </nav>
+        </div>
+
+        <div class="sidebar-section">
+            <span class="sidebar-label">Control</span>
+            <nav class="sidebar-nav">
+                <a href="{{ url_for('list_assignments') }}" class="{% if request.endpoint == 'list_assignments' %}active{% endif %}">
+                    <i class="bi bi-person-check"></i> Asignaciones
+                </a>
+                <a href="{{ url_for('list_movements') }}" class="{% if request.endpoint == 'list_movements' %}active{% endif %}">
+                    <i class="bi bi-arrow-left-right"></i> Movimientos
+                </a>
+                <a href="{{ url_for('list_locations') }}" class="{% if request.endpoint in ['list_locations', 'create_location'] %}active{% endif %}">
+                    <i class="bi bi-geo-alt"></i> Ubicaciones
+                </a>
+                <a href="{{ url_for('alerts') }}" class="{% if request.endpoint == 'alerts' %}active{% endif %}">
+                    <i class="bi bi-bell"></i> Alertas
+                </a>
+                <a href="{{ url_for('change_password') }}" class="{% if request.endpoint == 'change_password' %}active{% endif %}">
+                    <i class="bi bi-key"></i> Mi contrasena
+                </a>
+                {% if current_user.role in [ROLE_ADMIN, ROLE_AUDITOR] %}
+                <a href="{{ url_for('reports') }}" class="{% if request.endpoint in ['reports', 'system_log'] %}active{% endif %}">
+                    <i class="bi bi-bar-chart"></i> Reportes
+                </a>
+                <a href="{{ url_for('system_log') }}" class="{% if request.endpoint == 'system_log' %}active{% endif %}">
+                    <i class="bi bi-journal-text"></i> Bitacora
+                </a>
+                {% endif %}
+            </nav>
+        </div>
+
+        {% if current_user.role == ROLE_ADMIN %}
+        <div class="sidebar-section">
+            <span class="sidebar-label">Administracion</span>
+            <nav class="sidebar-nav">
+                <a href="{{ url_for('list_users') }}" class="{% if request.endpoint in ['list_users', 'create_user', 'edit_user'] %}active{% endif %}">
+                    <i class="bi bi-people"></i> Usuarios
+                </a>
+                <a href="{{ url_for('manage_roles') }}" class="{% if request.endpoint == 'manage_roles' %}active{% endif %}">
+                    <i class="bi bi-shield-check"></i> Roles y permisos
+                </a>
+            </nav>
+        </div>
+        {% endif %}
+
+        <div class="sidebar-footer">
+            <div class="user-mini-card">
+                <div class="user-avatar user-avatar-lg">{{ current_user.full_name[:1] }}</div>
+                <div>
+                    <strong>{{ current_user.full_name }}</strong>
+                    <small>{{ current_user.role }}</small>
+                    <span class="online-dot">En linea</span>
+                </div>
+            </div>
+            <div class="storage-card">
+                <div class="storage-header">
+                    <strong>Almacenamiento</strong>
+                    <span>62%</span>
+                </div>
+                <div class="progress progress-thin">
+                    <div class="progress-bar" style="width: 62%"></div>
+                </div>
+                <small>Documentos, facturas y anexos del sistema</small>
+            </div>
+            <a href="{{ url_for('logout') }}" class="btn btn-outline-primary btn-sm w-100 mt-3">Cerrar sesion</a>
+        </div>
+    </aside>
+
+    <div class="main-panel">
+        <header class="topbar">
+            <div class="topbar-heading-card">
+                <div class="topbar-heading">
+                    <div class="header-chip"><i class="bi bi-list"></i></div>
+                    <div class="topbar-heading-copy">
+                        <h1 class="page-title">{% block page_title %}Panel principal{% endblock %}</h1>
+                        <p class="page-subtitle">{% block page_subtitle %}Gestion centralizada de activos RFID.{% endblock %}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="topbar-toolbar">
+                <form class="global-search" action="{{ url_for('global_search') }}" method="get">
+                    <i class="bi bi-search"></i>
+                    <input type="text" id="globalSearchInput" name="q" placeholder="Buscar activos, usuarios, RFID..." value="{{ request.args.get('q', '') }}">
+                    <span class="shortcut-chip">Ctrl + K</span>
+                </form>
+                <div class="topbar-actions">
+                    <a class="icon-btn" href="{{ url_for('alerts') }}" title="Ver alertas">
+                        <i class="bi bi-bell"></i>
+                        {% if TOPBAR_ALERT_COUNT %}
+                        <span class="icon-pill">{{ TOPBAR_ALERT_COUNT if TOPBAR_ALERT_COUNT < 100 else '99+' }}</span>
+                        {% endif %}
+                    </a>
+                    <button class="icon-btn" type="button" data-bs-toggle="modal" data-bs-target="#helpModal" title="Ayuda rapida">
+                        <i class="bi bi-question-circle"></i>
+                    </button>
+                    <button class="icon-btn" type="button" id="themeToggleBtn" title="Cambiar apariencia">
+                        <i class="bi bi-sun" id="themeToggleIcon"></i>
+                    </button>
+                </div>
+                <div class="topbar-user-menu">
+                <button class="topbar-user" type="button" id="topbarUserToggle" aria-expanded="false">
+                    <div class="user-avatar">{{ current_user.full_name[:1] }}</div>
+                    <div>
+                        <strong>{{ current_user.full_name }}</strong>
+                        <small>{{ current_user.email }}</small>
+                    </div>
+                    <i class="bi bi-chevron-down text-muted"></i>
+                </button>
+                    <div class="topbar-user-dropdown" id="topbarUserDropdown">
+                        <a href="{{ url_for('change_password') }}"><i class="bi bi-key"></i> Cambiar contrasena</a>
+                        <a href="{{ url_for('list_assets') }}"><i class="bi bi-box-seam"></i> Ver activos</a>
+                        {% if current_user.role == ROLE_ADMIN %}
+                        <a href="{{ url_for('list_users') }}"><i class="bi bi-people"></i> Gestionar usuarios</a>
+                        {% endif %}
+                        <a href="{{ url_for('logout') }}" class="danger-link"><i class="bi bi-box-arrow-right"></i> Cerrar sesion</a>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="content-area">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="flash-stack">
+                        {% for category, message in messages %}
+                        <div class="toast-alert toast-{{ category }}">
+                            <div class="toast-alert-icon"><i class="bi bi-info-circle"></i></div>
+                            <div>{{ message }}</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+</div>
+{% else %}
+    {% block auth_content %}{% endblock %}
+{% endif %}
+
+<div class="modal fade" id="helpModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content help-modal">
+            <div class="modal-header">
+                <h5 class="modal-title">Ayuda rapida del sistema</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="help-modal-grid">
+                    <div class="help-modal-card">
+                        <strong>Busqueda global</strong>
+                        <p>Usa <code>Ctrl + K</code> para buscar activos, usuarios, RFID, NFC o codigos de barras.</p>
+                    </div>
+                    <div class="help-modal-card">
+                        <strong>Lecturas rapidas</strong>
+                        <p>Desde "Escanear" puedes usar RFID, NFC o Barras en una sola interfaz con pestanas.</p>
+                    </div>
+                    <div class="help-modal-card">
+                        <strong>Acceso y seguridad</strong>
+                        <p>Desde el menu de usuario puedes cambiar tu contrasena o cerrar sesion en cualquier momento.</p>
+                    </div>
+                    <div class="help-modal-card">
+                        <strong>Alertas</strong>
+                        <p>La campana te lleva al modulo de alertas con mantenimientos y garantias proximas.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% from 'components/ui.html' import empty_state, section_header %}
+{% block page_title %}Usuarios{% endblock %}
+{% block page_subtitle %}Gestion de cuentas, roles, estado y seguridad operativa del sistema.{% endblock %}
+{% block content %}
+<section class="card-panel">
+    {{ section_header('Listado de usuarios', 'Administracion centralizada de cuentas, acceso temporal y verificacion', url_for('create_user'), 'Nuevo usuario', 'btn btn-primary btn-sm') }}
+    <div class="table-responsive">
+        <table class="table table-clean table-modern align-middle">
+            <thead><tr><th>Nombre</th><th>Usuario</th><th>Correo</th><th>Verificacion</th><th>Rol</th><th>Estado</th><th></th></tr></thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>
+                        <div class="asset-row-title">
+                            <div class="asset-row-icon"><i class="bi bi-person"></i></div>
+                            <div>
+                                <strong>{{ user.full_name }}</strong><br>
+                                <small class="text-muted">Cambio de clave: {{ user.password_changed_at.strftime('%Y-%m-%d') if user.password_changed_at else 'sin registro' }}</small>
+                            </div>
+                        </div>
+                    </td>
+                    <td>{{ user.username }}</td>
+                    <td>{{ user.email }}</td>
+                    <td>
+                        <span class="status-badge {% if user.email_verified %}status-activo{% else %}status-mantenimiento{% endif %}">
+                            {{ 'verificado' if user.email_verified else 'pendiente' }}
+                        </span>
+                    </td>
+                    <td><span class="soft-badge">{{ user.role }}</span></td>
+                    <td><span class="status-badge {% if user.is_active_user %}status-activo{% else %}status-dado_de_baja{% endif %}">{{ 'activo' if user.is_active_user else 'inactivo' }}</span></td>
+                    <td class="text-end">
+                        <a href="{{ url_for('edit_user', user_id=user.id) }}" class="btn btn-sm btn-light">Editar</a>
+                        <a href="{{ url_for('toggle_user', user_id=user.id) }}" class="btn btn-sm btn-outline-secondary">Activar / desactivar</a>
+                        <a href="{{ url_for('send_temporary_access', user_id=user.id) }}" class="btn btn-sm btn-outline-primary">Acceso temporal</a>
+                        {% if not user.email_verified %}
+                        <a href="{{ url_for('resend_verification_admin', user_id=user.id) }}" class="btn btn-sm btn-outline-secondary">Reenviar verificacion</a>
+                        <a href="{{ url_for('verify_user_manual', user_id=user.id) }}" class="btn btn-sm btn-outline-success" onclick="return confirm('Verificar manualmente a {{ user.username }}?')">Verificar manual</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="7">{{ empty_state('No hay usuarios registrados.', 'bi-people') }}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

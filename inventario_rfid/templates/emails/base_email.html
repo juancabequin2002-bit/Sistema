@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ app_name }}</title>
+</head>
+<body style="margin:0;padding:0;background-color:#101820;font-family:Inter,Arial,Helvetica,sans-serif;color:#0F172A;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:radial-gradient(circle at top,#12243D 0%,#101820 58%,#0B111A 100%);margin:0;padding:32px 0;">
+        <tr>
+            <td align="center">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:720px;background-color:#FFFFFF;border:1px solid rgba(123,60,255,0.16);border-radius:22px;overflow:hidden;box-shadow:0 24px 60px rgba(8,17,31,0.4);">
+                    <tr>
+                        <td style="padding:28px 36px;background:linear-gradient(135deg,#0B111A 0%,#146CFF 56%,#7B3CFF 100%);color:#FFFFFF;">
+                            <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                                <tr>
+                                    <td style="vertical-align:middle;">
+                                        {% if email_logo_url %}
+                                        <div style="margin-bottom:12px;">
+                                            <img src="{{ email_logo_url }}" alt="{{ app_name }}" style="display:block;max-height:44px;max-width:220px;">
+                                        </div>
+                                        {% else %}
+                                        <div style="font-size:34px;line-height:1;margin-bottom:10px;">📡</div>
+                                        {% endif %}
+                                        <div style="font-size:16px;font-weight:700;letter-spacing:0.2px;">TRAZIA RFID</div>
+                                        <div style="font-size:14px;color:#E0E7FF;margin-top:4px;">Inventario · Custodia · Trazabilidad Inteligente</div>
+                                    </td>
+                                    <td align="right" style="vertical-align:middle;font-size:38px;line-height:1;">
+                                        {% block hero_icon %}🔐{% endblock %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding:40px 36px 32px;">
+                            {% block content %}{% endblock %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding:22px 36px;background-color:#F8FAFC;border-top:1px solid #E2E8F0;">
+                            <div style="font-size:15px;font-weight:700;color:#0F172A;">{{ app_name }}</div>
+                            <div style="font-size:13px;color:#475569;margin-top:4px;">&copy; {{ current_year }} Todos los derechos reservados.</div>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

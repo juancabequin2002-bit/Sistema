@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block page_title %}Reportes y bitacora{% endblock %}
+{% block page_subtitle %}Exportacion CSV y seguimiento de eventos relevantes del sistema.{% endblock %}
+{% block content %}
+<section class="page-grid">
+    <div class="card-panel">
+        <div class="panel-header">
+            <h3>Exportar reportes</h3>
+        </div>
+        <form method="post" class="row g-3">
+            {{ form.hidden_tag() }}
+            <div class="col-md-8">
+                <label class="form-label">{{ form.report_type.label }}</label>
+                {{ form.report_type(class="form-select") }}
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                {{ form.submit(class="btn btn-primary w-100") }}
+            </div>
+        </form>
+        <div class="mt-3 small text-muted">La estructura queda preparada para futuras exportaciones a Excel y PDF.</div>
+    </div>
+    <div class="card-panel">
+        <div class="panel-header">
+            <h3>Bitacora reciente</h3>
+            <a href="{{ url_for('system_log') }}" class="btn btn-light btn-sm">Ver mas</a>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-clean">
+                <thead><tr><th>Fecha</th><th>Modulo</th><th>Accion</th><th>Usuario</th></tr></thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr>
+                        <td>{{ log.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td>{{ log.module }}</td>
+                        <td>{{ log.action }}</td>
+                        <td>{{ log.user.full_name if log.user else 'Sistema' }}</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="4" class="text-center text-muted">No hay registros en bitacora.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+{% endblock %}

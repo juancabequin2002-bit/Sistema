@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% from 'components/ui.html' import empty_state, section_header %}
+{% block page_title %}Mantenimientos{% endblock %}
+{% block page_subtitle %}Historial consolidado de intervenciones tecnicas y alertas programadas.{% endblock %}
+{% block content %}
+<section class="card-panel">
+    {{ section_header('Registros de mantenimiento', 'Consolidado tecnico con proximos vencimientos y costos', url_for('create_maintenance'), 'Nuevo registro', 'btn btn-primary btn-sm') }}
+    <div class="table-responsive">
+        <table class="table table-clean table-modern">
+            <thead><tr><th>Activo</th><th>Tipo</th><th>Fecha</th><th>Tecnico</th><th>Costo</th><th>Proximo</th></tr></thead>
+            <tbody>
+                {% for record in records %}
+                <tr>
+                    <td>
+                        <div class="asset-row-title">
+                            <div class="asset-row-icon"><i class="bi bi-wrench-adjustable-circle"></i></div>
+                            <div>
+                                <a href="{{ url_for('asset_detail', asset_id=record.asset.id) }}">{{ record.asset.internal_code }}</a><br>
+                                <small class="text-muted">{{ record.asset.name }}</small>
+                            </div>
+                        </div>
+                    </td>
+                    <td><span class="soft-badge">{{ record.maintenance_type }}</span></td>
+                    <td>{{ record.maintenance_date }}</td>
+                    <td>{{ record.technician_name }}</td>
+                    <td>{{ record.cost or 'N/D' }}</td>
+                    <td>{{ record.next_maintenance_date or 'N/D' }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6">{{ empty_state('Sin mantenimientos registrados.', 'bi-tools') }}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

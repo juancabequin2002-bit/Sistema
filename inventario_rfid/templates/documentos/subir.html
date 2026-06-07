@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% block page_title %}Subir documento{% endblock %}
+{% block page_subtitle %}Carga segura de facturas, garantias, fotos y anexos del activo.{% endblock %}
+{% block content %}
+<section class="card-panel">
+    <form method="post" enctype="multipart/form-data" class="row g-3">
+        {{ form.hidden_tag() }}
+        <div class="col-md-6">
+            <label class="form-label">{{ form.asset_id.label }}</label>
+            {{ form.asset_id(class="form-select") }}
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">{{ form.document_name.label }}</label>
+            {{ form.document_name(class="form-control") }}
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">{{ form.document_type.label }}</label>
+            {{ form.document_type(class="form-select") }}
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">{{ form.file.label }}</label>
+            {{ form.file(class="form-control") }}
+        </div>
+        <div class="col-12">
+            <label class="form-label">{{ form.observations.label }}</label>
+            {{ form.observations(class="form-control", rows="4") }}
+        </div>
+        <div class="col-12 d-flex gap-2">
+            {{ form.submit(class="btn btn-primary") }}
+            <a href="{{ url_for('list_documents') }}" class="btn btn-light">Cancelar</a>
+        </div>
+    </form>
+</section>
+{% endblock %}

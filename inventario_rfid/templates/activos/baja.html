@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block page_title %}Dar de baja{% endblock %}
+{% block page_subtitle %}Proceso controlado para registrar la baja definitiva del activo.{% endblock %}
+{% block content %}
+<section class="card-panel">
+    <div class="alert alert-warning">Esta accion cambiara el estado del activo a <strong>dado de baja</strong> y quedara registrada en el historial.</div>
+    <form method="post" enctype="multipart/form-data" class="row g-3">
+        {{ form.hidden_tag() }}
+        <div class="col-md-4">
+            <label class="form-label">{{ form.disposal_date.label }}</label>
+            {{ form.disposal_date(class="form-control") }}
+        </div>
+        <div class="col-md-8">
+            <label class="form-label">{{ form.reason.label }}</label>
+            {{ form.reason(class="form-control") }}
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">{{ form.support_file.label }}</label>
+            {{ form.support_file(class="form-control") }}
+        </div>
+        <div class="col-12">
+            <label class="form-label">{{ form.observations.label }}</label>
+            {{ form.observations(class="form-control", rows="4") }}
+        </div>
+        <div class="col-12 d-flex gap-2">
+            {{ form.submit(class="btn btn-danger") }}
+            <a href="{{ url_for('asset_detail', asset_id=asset.id) }}" class="btn btn-light">Cancelar</a>
+        </div>
+    </form>
+</section>
+{% endblock %}

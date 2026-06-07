@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% from 'components/ui.html' import empty_state, section_header %}
+{% block page_title %}Documentos{% endblock %}
+{% block page_subtitle %}Repositorio central de archivos digitales asociados al inventario.{% endblock %}
+{% block content %}
+<section class="card-panel">
+    {{ section_header('Documentos cargados', 'Repositorio digital con trazabilidad por activo, tipo y usuario', url_for('upload_document') if current_user.role in [ROLE_ADMIN, ROLE_TECH] else None, 'Subir documento', 'btn btn-primary btn-sm') }}
+    <div class="table-responsive">
+        <table class="table table-clean table-modern">
+            <thead><tr><th>Activo</th><th>Documento</th><th>Tipo</th><th>Fecha</th><th>Usuario</th><th></th></tr></thead>
+            <tbody>
+                {% for document in documents %}
+                <tr>
+                    <td>
+                        <div class="asset-row-title">
+                            <div class="asset-row-icon"><i class="bi bi-folder2-open"></i></div>
+                            <div>
+                                <a href="{{ url_for('asset_detail', asset_id=document.asset.id) }}">{{ document.asset.internal_code }}</a><br>
+                                <small class="text-muted">{{ document.asset.name }}</small>
+                            </div>
+                        </div>
+                    </td>
+                    <td>{{ document.document_name }}</td>
+                    <td><span class="soft-badge">{{ document.document_type }}</span></td>
+                    <td>{{ document.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td>{{ document.uploaded_by.full_name }}</td>
+                    <td><a href="{{ url_for('download_document', filename=document.stored_filename) }}" class="btn btn-sm btn-light">Descargar</a></td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6">{{ empty_state('No hay documentos cargados.', 'bi-file-earmark') }}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

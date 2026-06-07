@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block page_title %}Movimientos{% endblock %}
+{% block page_subtitle %}Seguimiento funcional de traslados, ubicaciones iniciales y cambios de estado.{% endblock %}
+{% block content %}
+<section class="card-panel">
+    <div class="panel-header">
+        <h3>Historial de movimientos</h3>
+        <span class="text-muted small">Trazabilidad por fecha, origen, destino y operador</span>
+    </div>
+    <div class="table-responsive table-wrap-modern">
+        <table class="table table-clean table-modern align-middle">
+            <thead><tr><th>Fecha</th><th>Activo</th><th>Tipo</th><th>Origen</th><th>Destino</th><th>Usuario</th><th>Observaciones</th></tr></thead>
+            <tbody>
+                {% for item in movements %}
+                <tr>
+                    <td>{{ item.movement_date }}</td>
+                    <td><a href="{{ url_for('asset_detail', asset_id=item.asset.id) }}">{{ item.asset.internal_code }} - {{ item.asset.name }}</a></td>
+                    <td>{{ item.movement_type }}</td>
+                    <td>{{ item.from_location or 'N/D' }}</td>
+                    <td>{{ item.to_location or 'N/D' }}</td>
+                    <td>{{ item.moved_by.full_name }}</td>
+                    <td>{{ item.observations or 'N/D' }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="7" class="text-center text-muted py-5">No hay movimientos registrados.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block page_title %}Ubicaciones{% endblock %}
+{% block page_subtitle %}Vista funcional de sedes, areas y ubicaciones activas del inventario.{% endblock %}
+{% block content %}
+<section class="card-panel">
+    <div class="panel-header">
+        <h3>Ubicaciones registradas</h3>
+        {% if current_user.role == ROLE_ADMIN %}
+        <a href="{{ url_for('create_location') }}" class="btn btn-primary">Nueva ubicacion</a>
+        {% endif %}
+    </div>
+    <div class="table-responsive table-wrap-modern">
+        <table class="table table-clean table-modern align-middle">
+            <thead><tr><th>Nombre</th><th>Descripcion</th><th>Estado</th><th>Activos asociados</th></tr></thead>
+            <tbody>
+                {% for item in locations %}
+                <tr>
+                    <td>{{ item.name }}</td>
+                    <td>{{ item.description or 'N/D' }}</td>
+                    <td><span class="status-badge {% if item.is_active %}status-activo{% else %}status-inactivo{% endif %}">{{ 'activo' if item.is_active else 'inactivo' }}</span></td>
+                    <td>{{ item.assets|length }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4" class="text-center text-muted py-5">No hay ubicaciones registradas.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

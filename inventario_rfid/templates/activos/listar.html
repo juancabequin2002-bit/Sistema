@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+{% block page_title %}Gestion de Activos{% endblock %}
+{% block page_subtitle %}Consulta, filtra y navega por activos, expedientes, carpetas, cajas y archivos fisicos desde una sola vista operativa.{% endblock %}
+{% block content %}
+<section class="page-grid page-grid-wide">
+    <div class="card-panel">
+        <div class="panel-header">
+            <h3>Filtros inteligentes</h3>
+            <div class="filter-chip-row">
+                <span class="filter-chip active">Todos</span>
+                <span class="filter-chip">Sin responsable</span>
+                <span class="filter-chip">Sin ubicacion</span>
+                <span class="filter-chip">Archivo fisico</span>
+            </div>
+        </div>
+        <form class="row g-3 align-items-end" method="get">
+            <div class="col-lg-3">
+                <label class="form-label">Buscar</label>
+                <input type="text" name="q" class="form-control" value="{{ request.args.get('q', global_query or '') }}" placeholder="RFID, nombre, serial, expediente...">
+            </div>
+            <div class="col-lg-2">
+                <label class="form-label">Estado</label>
+                <select name="status" class="form-select">
+                    <option value="">Todos</option>
+                    <option value="activo" {% if request.args.get('status') == 'activo' %}selected{% endif %}>Activo</option>
+                    <option value="inactivo" {% if request.args.get('status') == 'inactivo' %}selected{% endif %}>Inactivo</option>
+                    <option value="mantenimiento" {% if request.args.get('status') == 'mantenimiento' %}selected{% endif %}>Mantenimiento</option>
+                    <option value="dado_de_baja" {% if request.args.get('status') == 'dado_de_baja' %}selected{% endif %}>Dado de baja</option>
+                </select>
+            </div>
+            <div class="col-lg-2">
+                <label class="form-label">Tipo</label>
+                <select name="type" class="form-select">
+                    <option value="">Todos</option>
+                    {% for option in ['Equipo de computo','Archivo fisico','Expediente','Carpeta','Documento','Caja'] %}
+                    <option value="{{ option }}" {% if request.args.get('type') == option %}selected{% endif %}>{{ option }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-lg-2">
+                <label class="form-label">Ubicacion</label>
+                <select name="location" class="form-select">
+                    <option value="">Todas</option>
+                    {% for location in locations %}
+                    <option value="{{ location.name }}" {% if request.args.get('location') == location.name %}selected{% endif %}>{{ location.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-lg-2">
+                <label class="form-label">Responsable</label>
+                <input type="text" name="responsible" class="form-control" value="{{ request.args.get('responsible', '') }}" placeholder="Nombre">
+            </div>
+            <div class="col-lg-1 d-grid">
+                <button class="btn btn-primary" type="submit">Filtrar</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="card-panel">
+        <div class="panel-header">
+            <h3>Acciones rapidas</h3>
+            <div class="asset-toolbar">
+                {% if current_user.role in [ROLE_ADMIN, ROLE_TECH] %}
+                <a href="{{ url_for('create_asset') }}" class="btn btn-outline-primary">Nuevo registro</a>
+                <a href="{{ url_for('qr_batch_export') }}" class="btn btn-outline-secondary"><i class="bi bi-qr-code"></i> Exportar QR en lote</a>
+                {% endif %}
+                <a href="{{ url_for('rfid_scan') }}" class="btn btn-success">Lectura RFID</a>
+                <a href="{{ url_for('nfc_scan') }}" class="btn btn-outline-primary">Lectura NFC</a>
+                <a href="{{ url_for('barcode_scan') }}" class="btn btn-outline-primary">Codigo de barras</a>
+            </div>
+        </div>
+        <div class="asset-stat-strip">
+            <div class="asset-stat-pill"><strong>{{ assets|length }}</strong><span>Resultados</span></div>
+            <div class="asset-stat-pill"><strong>RFID</strong><span>Busqueda rapida</span></div>
+            <div class="asset-stat-pill"><strong>NFC</strong><span>Movil listo</span></div>
+            <div class="asset-stat-pill"><strong>CSV</strong><span>Exportable</span></div>
+        </div>
+    </div>
+</section>
+
+<section class="card-panel mt-4">
+    <div class="panel-header">
+        <h3>Inventario visible</h3>
+        <span class="text-muted small">Columnas claras, estados destacados y acceso al detalle en un clic</span>
+    </div>
+    <div class="table-responsive table-wrap-modern">
+        <table class="table table-clean table-modern align-middle">
+            <thead>
+                <tr>
+                    <th>Identificadores</th>
+                    <th>Registro</th>
+                    <th>Tipo</th>
+                    <th>Estado</th>
+                    <th>Responsable</th>
+                    <th>Ubicacion</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for asset in assets %}
+                <tr>
+                    <td>
+                        <div class="identifier-stack">
+                            <code class="code-chip">{{ asset.rfid_code }}</code>
+                            {% if asset.nfc_code %}<small class="identifier-meta">NFC: {{ asset.nfc_code }}</small>{% endif %}
+                            {% if asset.barcode_code %}<small class="identifier-meta">BAR: {{ asset.barcode_code }}</small>{% endif %}
+                        </div>
+                    </td>
+                    <td>
+                        <div class="asset-row-title">
+                            <div class="asset-row-icon"><i class="bi bi-archive"></i></div>
+                            <div>
+                                <strong>{{ asset.name }}</strong><br>
+                                <small class="text-muted">{{ asset.internal_code }}</small>
+                            </div>
+                        </div>
+                    </td>
+                    <td><span class="soft-badge">{{ asset.asset_type }}</span></td>
+                    <td><span class="status-badge status-{{ asset.status }}">{{ asset.status.replace('_', ' ') }}</span></td>
+                    <td>{{ asset.current_responsible }}</td>
+                    <td>{{ asset.current_location }}</td>
+                    <td>
+                        <div class="row-actions">
+                            <a href="{{ url_for('asset_detail', asset_id=asset.id) }}" class="btn btn-sm btn-light">Ver</a>
+                            {% if current_user.role in [ROLE_ADMIN, ROLE_TECH] %}
+                            <a href="{{ url_for('edit_asset', asset_id=asset.id) }}" class="btn btn-sm btn-outline-primary">Editar</a>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="7" class="text-center text-muted py-5">No hay registros que coincidan con los filtros seleccionados.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

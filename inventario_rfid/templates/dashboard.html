@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+{% from 'components/ui.html' import empty_state, metric_card, section_header %}
+{% block page_title %}Dashboard{% endblock %}
+{% block page_subtitle %}Resumen ejecutivo con lo mas importante del inventario y las alertas operativas.{% endblock %}
+{% block content %}
+<section class="stats-grid stats-grid-compact">
+    {{ metric_card('Activos Totales', stats.total_assets, 'Todos los registros', 'primary') }}
+    {{ metric_card('Activos Activos', stats.active_assets, 'Disponibles y operativos', 'success') }}
+    {{ metric_card('En Mantenimiento', stats.maintenance_assets, 'Seguimiento tecnico', 'warning') }}
+    {{ metric_card('Dados de Baja', stats.disposed_assets, 'Historial preservado', 'danger') }}
+    {{ metric_card('Usuarios Activos', stats.active_users, 'Operadores vigentes', 'violet') }}
+</section>
+
+<section class="dashboard-executive-grid mt-4">
+    <div class="card-panel">
+        {{ section_header('Alertas Prioritarias', 'Pendientes que requieren atencion inmediata') }}
+        {% if alerts %}
+        <ul class="simple-list alert-list-compact">
+            {% for alert in alerts[:5] %}
+            <li><i class="bi bi-exclamation-circle text-warning"></i> {{ alert }}</li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        {{ empty_state('No hay alertas criticas registradas hoy.', 'bi-check2-circle') }}
+        {% endif %}
+    </div>
+    <div class="card-panel">
+        {{ section_header('Acciones Rapidas', 'Atajos directos a los modulos operativos') }}
+        <div class="quick-actions quick-actions-grid">
+            {% if current_user.role in [ROLE_ADMIN, ROLE_TECH] %}
+            <a href="{{ url_for('create_asset') }}" class="quick-tile"><i class="bi bi-plus-circle"></i><span>Nuevo registro</span></a>
+            <a href="{{ url_for('create_maintenance') }}" class="quick-tile"><i class="bi bi-tools"></i><span>Mantenimiento</span></a>
+            <a href="{{ url_for('upload_document') }}" class="quick-tile"><i class="bi bi-upload"></i><span>Documentos</span></a>
+            {% endif %}
+            <a href="{{ url_for('rfid_scan') }}" class="quick-tile"><i class="bi bi-upc-scan"></i><span>Lectura RFID</span></a>
+            <a href="{{ url_for('nfc_scan') }}" class="quick-tile"><i class="bi bi-phone"></i><span>Lectura NFC</span></a>
+            <a href="{{ url_for('barcode_scan') }}" class="quick-tile"><i class="bi bi-qr-code-scan"></i><span>Codigo barras</span></a>
+            <a href="{{ url_for('list_assets') }}" class="quick-tile"><i class="bi bi-box-seam"></i><span>Activos</span></a>
+            <a href="{{ url_for('list_locations') }}" class="quick-tile"><i class="bi bi-geo-alt"></i><span>Ubicaciones</span></a>
+            {% if current_user.role == ROLE_ADMIN %}
+            <a href="{{ url_for('create_user') }}" class="quick-tile"><i class="bi bi-person-plus"></i><span>Usuarios</span></a>
+            {% endif %}
+            <a href="{{ url_for('reports') }}" class="quick-tile"><i class="bi bi-bar-chart"></i><span>Reportes</span></a>
+        </div>
+    </div>
+    <div class="card-panel">
+        {{ section_header('Lectura Rapida RFID', 'Ingreso directo a la consola de captura') }}
+        <div class="rfid-widget">
+            <div class="rfid-rings"><i class="bi bi-broadcast"></i></div>
+            <p>Escanea una etiqueta RFID o abre la consola de captura manual.</p>
+            <a href="{{ url_for('rfid_scan') }}" class="btn btn-success w-100">Iniciar lectura</a>
+        </div>
+    </div>
+    <div class="card-panel">
+        {{ section_header('Registro Destacado', 'Ultimo elemento actualizado en plataforma') }}
+        {% if highlighted_asset %}
+        <div class="asset-spotlight">
+            <div class="spotlight-image"><i class="bi bi-archive"></i></div>
+            <div class="spotlight-body">
+                <strong>{{ highlighted_asset.name }}</strong>
+                <div class="small text-muted">{{ highlighted_asset.rfid_code }}</div>
+                <div class="spotlight-grid">
+                    <span>Tipo</span><strong>{{ highlighted_asset.asset_type }}</strong>
+                    <span>Ubicacion</span><strong>{{ highlighted_asset.current_location }}</strong>
+                    <span>Responsable</span><strong>{{ highlighted_asset.current_responsible }}</strong>
+                    <span>Estado</span><strong>{{ highlighted_asset.status.replace('_', ' ') }}</strong>
+                </div>
+                <a href="{{ url_for('asset_detail', asset_id=highlighted_asset.id) }}" class="btn btn-light btn-sm mt-3">Ver hoja de vida</a>
+            </div>
+        </div>
+        {% else %}
+        {{ empty_state('No hay registros destacados aun.', 'bi-stars') }}
+        {% endif %}
+    </div>
+</section>
+
+<section class="page-grid mt-4">
+    <div class="card-panel">
+        {{ section_header('Ultimos Movimientos', 'Trazabilidad reciente del inventario') }}
+        <div class="table-responsive">
+            <table class="table table-clean">
+                <thead><tr><th>Fecha</th><th>Activo</th><th>Tipo</th><th>Detalle</th></tr></thead>
+                <tbody>
+                    {% for movement in latest_movements[:6] %}
+                    <tr>
+                        <td>{{ movement.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td>{{ movement.asset.name }}</td>
+                        <td>{{ movement.movement_type }}</td>
+                        <td>{{ movement.from_location or 'N/D' }} -> {{ movement.to_location or 'N/D' }}</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="4">{{ empty_state('No hay movimientos registrados aun.', 'bi-arrow-left-right') }}</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card-panel">
+        {{ section_header('Proximos Mantenimientos', 'Intervenciones programadas o cercanas') }}
+        <div class="table-responsive">
+            <table class="table table-clean">
+                <thead><tr><th>Activo</th><th>Tipo</th><th>Fecha</th></tr></thead>
+                <tbody>
+                    {% for item in upcoming_maintenances %}
+                    <tr>
+                        <td><a href="{{ url_for('asset_detail', asset_id=item.asset.id) }}">{{ item.asset.internal_code }}</a></td>
+                        <td>{{ item.maintenance_type }}</td>
+                        <td>{{ item.next_maintenance_date }}</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="3">{{ empty_state('Sin mantenimientos programados.', 'bi-tools') }}</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+{% endblock %}

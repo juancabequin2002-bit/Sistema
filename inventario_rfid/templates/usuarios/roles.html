@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block page_title %}Roles y permisos{% endblock %}
+{% block page_subtitle %}Cambia el rol de cualquier usuario desde una consola administrativa centralizada.{% endblock %}
+{% block content %}
+<section class="card-panel">
+    <div class="panel-header">
+        <h3>Gestion de roles</h3>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-clean align-middle">
+            <thead><tr><th>Usuario</th><th>Correo</th><th>Rol actual</th><th>Cambiar rol</th></tr></thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>
+                        <strong>{{ user.full_name }}</strong><br>
+                        <small class="text-muted">{{ user.username }}</small>
+                    </td>
+                    <td>{{ user.email }}</td>
+                    <td><span class="soft-badge">{{ user.role }}</span></td>
+                    <td>
+                        <form method="post" class="d-flex gap-2">
+                            <input type="hidden" name="user_id" value="{{ user.id }}">
+                            <select name="role" class="form-select form-select-sm">
+                                <option value="administrador" {% if user.role == 'administrador' %}selected{% endif %}>Administrador</option>
+                                <option value="tecnico" {% if user.role == 'tecnico' %}selected{% endif %}>Tecnico</option>
+                                <option value="consulta" {% if user.role == 'consulta' %}selected{% endif %}>Consulta</option>
+                                <option value="auditor" {% if user.role == 'auditor' %}selected{% endif %}>Auditor</option>
+                            </select>
+                            <button type="submit" class="btn btn-sm btn-primary">Guardar</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

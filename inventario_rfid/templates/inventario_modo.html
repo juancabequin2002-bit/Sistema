@@ -1,0 +1,596 @@
+{% extends 'base.html' %}
+{% block page_title %}Modo Inventario{% endblock %}
+{% block page_subtitle %}Escanea activos uno a uno y compara contra el inventario esperado en una ubicacion.{% endblock %}
+
+{% block extra_css %}
+<style>
+.inventario-container { max-width: 900px; margin: 0 auto; }
+.step-panel { display: none; }
+.step-panel.active { display: block; }
+.scan-input-wrapper { position: relative; margin-bottom: 1rem; }
+.scan-input-wrapper input {
+    font-size: 1.3rem;
+    padding: 1rem 1.2rem;
+    border-radius: 12px;
+    background: var(--card-bg, rgba(30,30,50,0.85));
+    border: 2px solid var(--border-color, rgba(255,255,255,0.08));
+    color: var(--text-primary, #fff);
+    width: 100%;
+    transition: border-color 0.2s;
+}
+.scan-input-wrapper input:focus {
+    border-color: var(--accent, #6366f1);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
+}
+.scan-counter-bar {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+    padding: 1rem 1.2rem;
+    border-radius: 12px;
+    background: var(--card-bg, rgba(30,30,50,0.85));
+    border: 1px solid var(--border-color, rgba(255,255,255,0.08));
+}
+.scan-counter-bar .counter-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+.counter-item .counter-value {
+    font-size: 1.3rem;
+    font-weight: 800;
+}
+.counter-item.found .counter-value { color: #10b981; }
+.counter-item.not-found .counter-value { color: #ef4444; }
+.counter-item.total .counter-value { color: #6366f1; }
+.scanned-list {
+    max-height: 350px;
+    overflow-y: auto;
+    border-radius: 12px;
+    border: 1px solid var(--border-color, rgba(255,255,255,0.08));
+    background: var(--card-bg, rgba(30,30,50,0.85));
+}
+.scanned-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.7rem 1rem;
+    border-bottom: 1px solid var(--border-color, rgba(255,255,255,0.05));
+    font-size: 0.9rem;
+}
+.scanned-item:last-child { border-bottom: none; }
+.scanned-item .scan-status {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.8rem; font-weight: 700;
+    flex-shrink: 0;
+}
+.scan-status.found { background: rgba(16,185,129,0.15); color: #10b981; }
+.scan-status.not-found { background: rgba(239,68,68,0.15); color: #ef4444; }
+.scanned-item .scan-info { flex: 1; min-width: 0; }
+.scanned-item .scan-info .scan-code {
+    font-family: monospace;
+    font-size: 0.85rem;
+    opacity: 0.7;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.scanned-item .scan-info .scan-name { font-weight: 600; }
+.scan-type-selector {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+.scan-type-selector .btn-check:checked + .btn {
+    background: var(--accent, #6366f1);
+    color: #fff;
+    border-color: var(--accent, #6366f1);
+}
+/* Results */
+.result-section { margin-bottom: 1.5rem; }
+.result-section h4 {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.result-section h4 .badge {
+    font-size: 0.8rem;
+    padding: 0.3em 0.7em;
+    border-radius: 6px;
+}
+.result-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+}
+.result-table th, .result-table td {
+    padding: 0.6rem 0.8rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color, rgba(255,255,255,0.06));
+}
+.result-table th {
+    font-weight: 600;
+    opacity: 0.7;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+}
+.result-found { border-left: 3px solid #10b981; }
+.result-missing { border-left: 3px solid #ef4444; }
+.result-extra { border-left: 3px solid #f59e0b; }
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+.summary-card {
+    padding: 1rem;
+    border-radius: 12px;
+    background: var(--card-bg, rgba(30,30,50,0.85));
+    border: 1px solid var(--border-color, rgba(255,255,255,0.08));
+    text-align: center;
+}
+.summary-card .summary-value {
+    font-size: 1.8rem;
+    font-weight: 800;
+    line-height: 1;
+}
+.summary-card .summary-label {
+    font-size: 0.8rem;
+    opacity: 0.7;
+    margin-top: 0.25rem;
+}
+.summary-card.card-green .summary-value { color: #10b981; }
+.summary-card.card-red .summary-value { color: #ef4444; }
+.summary-card.card-yellow .summary-value { color: #f59e0b; }
+.summary-card.card-blue .summary-value { color: #6366f1; }
+.duplicate-toast {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    background: #f59e0b;
+    color: #000;
+    padding: 0.75rem 1.25rem;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    z-index: 9999;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.3s;
+    pointer-events: none;
+}
+.duplicate-toast.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+@media (max-width: 576px) {
+    .scan-counter-bar { gap: 0.75rem; padding: 0.75rem; }
+    .counter-item .counter-value { font-size: 1.1rem; }
+    .scan-input-wrapper input { font-size: 1.1rem; padding: 0.85rem 1rem; }
+    .summary-grid { grid-template-columns: repeat(2, 1fr); }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="inventario-container">
+
+    <!-- STEP 1: Setup -->
+    <div id="step-setup" class="step-panel active">
+        <div class="card-panel" style="padding: 2rem;">
+            <div class="rfid-live-header" style="margin-bottom: 1.5rem;">
+                <div class="rfid-icon"><i class="bi bi-clipboard2-check"></i></div>
+                <div>
+                    <h2>Iniciar inventario</h2>
+                    <p>Selecciona la ubicacion que vas a inventariar. Al finalizar el escaneo, el sistema comparara lo que encontraste contra lo registrado.</p>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label for="location-select" class="form-label" style="font-weight:600;">Ubicacion</label>
+                <select id="location-select" class="form-control form-control-modern">
+                    <option value="">-- Selecciona una ubicacion --</option>
+                    {% for loc in locations %}
+                    <option value="{{ loc.id }}">{{ loc.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <button id="btn-start-inventory" class="btn btn-primary btn-lg px-4" disabled>
+                <i class="bi bi-play-fill"></i> Iniciar inventario
+            </button>
+        </div>
+    </div>
+
+    <!-- STEP 2: Scanning -->
+    <div id="step-scan" class="step-panel">
+        <div class="card-panel" style="padding: 1.5rem;">
+            <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.75rem; margin-bottom:1rem;">
+                <h3 style="margin:0; font-size:1.1rem; font-weight:700;">
+                    <i class="bi bi-geo-alt-fill" style="color:var(--accent,#6366f1);"></i>
+                    Escaneando: <span id="scan-location-name"></span>
+                </h3>
+                <button id="btn-finish-scan" class="btn btn-warning btn-sm px-3">
+                    <i class="bi bi-stop-fill"></i> Finalizar inventario
+                </button>
+            </div>
+
+            <div class="scan-type-selector">
+                <input type="radio" class="btn-check" name="scan-type" id="scan-type-rfid" value="rfid" checked>
+                <label class="btn btn-outline-secondary btn-sm" for="scan-type-rfid">RFID</label>
+
+                <input type="radio" class="btn-check" name="scan-type" id="scan-type-nfc" value="nfc">
+                <label class="btn btn-outline-secondary btn-sm" for="scan-type-nfc">NFC</label>
+
+                <input type="radio" class="btn-check" name="scan-type" id="scan-type-barcode" value="barcode">
+                <label class="btn btn-outline-secondary btn-sm" for="scan-type-barcode">Barras</label>
+            </div>
+
+            <div class="scan-input-wrapper">
+                <input type="text" id="scan-input" placeholder="Escanea o escribe el codigo aqui..." autocomplete="off">
+            </div>
+
+            <div class="scan-counter-bar">
+                <div class="counter-item total">
+                    <span>Escaneados:</span>
+                    <span class="counter-value" id="count-total">0</span>
+                </div>
+                <div class="counter-item found">
+                    <span>Encontrados:</span>
+                    <span class="counter-value" id="count-found">0</span>
+                </div>
+                <div class="counter-item not-found">
+                    <span>No registrados:</span>
+                    <span class="counter-value" id="count-not-found">0</span>
+                </div>
+            </div>
+
+            <div class="scanned-list" id="scanned-list">
+                <div style="padding:2rem; text-align:center; opacity:0.5;">
+                    <i class="bi bi-inbox" style="font-size:2rem;"></i>
+                    <p style="margin:0.5rem 0 0;">Los activos escaneados apareceran aqui</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- STEP 3: Results -->
+    <div id="step-results" class="step-panel">
+        <div class="card-panel" style="padding: 1.5rem;">
+            <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.75rem; margin-bottom:1.5rem;">
+                <h3 style="margin:0; font-size:1.1rem; font-weight:700;">
+                    <i class="bi bi-clipboard2-data-fill" style="color:var(--accent,#6366f1);"></i>
+                    Resultados del inventario
+                </h3>
+                <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                    <button id="btn-export-csv" class="btn btn-outline-primary btn-sm px-3">
+                        <i class="bi bi-download"></i> Exportar CSV
+                    </button>
+                    <button id="btn-new-inventory" class="btn btn-primary btn-sm px-3">
+                        <i class="bi bi-arrow-repeat"></i> Nuevo inventario
+                    </button>
+                </div>
+            </div>
+
+            <div class="summary-grid" id="summary-grid"></div>
+
+            <div id="results-content"></div>
+        </div>
+    </div>
+
+</section>
+
+<div class="duplicate-toast" id="duplicate-toast">Codigo ya escaneado</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+    // State
+    let selectedLocationId = null;
+    let selectedLocationName = '';
+    let scannedItems = [];
+    let resultsData = null;
+
+    // Elements
+    const locationSelect = document.getElementById('location-select');
+    const btnStart = document.getElementById('btn-start-inventory');
+    const btnFinish = document.getElementById('btn-finish-scan');
+    const btnExport = document.getElementById('btn-export-csv');
+    const btnNew = document.getElementById('btn-new-inventory');
+    const scanInput = document.getElementById('scan-input');
+    const scannedList = document.getElementById('scanned-list');
+    const countTotal = document.getElementById('count-total');
+    const countFound = document.getElementById('count-found');
+    const countNotFound = document.getElementById('count-not-found');
+    const scanLocationName = document.getElementById('scan-location-name');
+    const duplicateToast = document.getElementById('duplicate-toast');
+
+    const stepSetup = document.getElementById('step-setup');
+    const stepScan = document.getElementById('step-scan');
+    const stepResults = document.getElementById('step-results');
+
+    function showStep(step) {
+        stepSetup.classList.remove('active');
+        stepScan.classList.remove('active');
+        stepResults.classList.remove('active');
+        step.classList.add('active');
+    }
+
+    // Enable start button when location selected
+    locationSelect.addEventListener('change', function() {
+        btnStart.disabled = !this.value;
+    });
+
+    // Start inventory
+    btnStart.addEventListener('click', function() {
+        selectedLocationId = parseInt(locationSelect.value);
+        selectedLocationName = locationSelect.options[locationSelect.selectedIndex].text;
+        scannedItems = [];
+        scanLocationName.textContent = selectedLocationName;
+        updateCounters();
+        scannedList.innerHTML = '<div style="padding:2rem; text-align:center; opacity:0.5;"><i class="bi bi-inbox" style="font-size:2rem;"></i><p style="margin:0.5rem 0 0;">Los activos escaneados apareceran aqui</p></div>';
+        showStep(stepScan);
+        setTimeout(function() { scanInput.focus(); }, 100);
+    });
+
+    // Get scan type
+    function getScanType() {
+        const checked = document.querySelector('input[name="scan-type"]:checked');
+        return checked ? checked.value : 'rfid';
+    }
+
+    // Duplicate detection
+    function isDuplicate(type, code) {
+        return scannedItems.some(function(item) {
+            return item.type === type && item.code === code;
+        });
+    }
+
+    function showDuplicateToast() {
+        duplicateToast.classList.add('show');
+        setTimeout(function() {
+            duplicateToast.classList.remove('show');
+        }, 2000);
+    }
+
+    // Update counters
+    function updateCounters() {
+        countTotal.textContent = scannedItems.length;
+        const found = scannedItems.filter(function(i) { return i.found; }).length;
+        const notFound = scannedItems.length - found;
+        countFound.textContent = found;
+        countNotFound.textContent = notFound;
+    }
+
+    // Add scanned item to UI
+    function renderScannedItem(item) {
+        // Remove empty placeholder if present
+        const placeholder = scannedList.querySelector('div[style]');
+        if (placeholder && scannedList.children.length === 1) {
+            scannedList.innerHTML = '';
+        }
+
+        const div = document.createElement('div');
+        div.className = 'scanned-item';
+        const statusClass = item.found ? 'found' : 'not-found';
+        const statusIcon = item.found ? '<i class="bi bi-check-lg"></i>' : '<i class="bi bi-x-lg"></i>';
+        const nameText = item.found ? item.asset_name : 'No registrado';
+        const codeText = item.found ? (item.internal_code + ' | ' + item.code) : item.code;
+
+        div.innerHTML = '<div class="scan-status ' + statusClass + '">' + statusIcon + '</div>' +
+            '<div class="scan-info"><div class="scan-name">' + escapeHtml(nameText) + '</div>' +
+            '<div class="scan-code">' + escapeHtml(codeText) + '</div></div>';
+
+        scannedList.insertBefore(div, scannedList.firstChild);
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // Handle scan input (Enter key)
+    scanInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const code = this.value.trim();
+            if (!code) return;
+
+            const scanType = getScanType();
+
+            // Duplicate check
+            if (isDuplicate(scanType, code)) {
+                showDuplicateToast();
+                this.value = '';
+                this.focus();
+                return;
+            }
+
+            // Verify asset via API
+            verifyCode(scanType, code);
+            this.value = '';
+            this.focus();
+        }
+    });
+
+    function verifyCode(type, code) {
+        fetch('/api/inventario/verificar-codigo', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ type: type, code: code })
+        })
+        .then(function(resp) { return resp.json(); })
+        .then(function(data) {
+            const item = {
+                type: type,
+                code: code,
+                found: data.found,
+                asset_name: data.asset_name || '',
+                internal_code: data.internal_code || '',
+                asset_id: data.asset_id || null,
+                location_id: data.location_id || null
+            };
+            scannedItems.push(item);
+            renderScannedItem(item);
+            updateCounters();
+        })
+        .catch(function() {
+            const item = { type: type, code: code, found: false, asset_name: '', internal_code: '', asset_id: null, location_id: null };
+            scannedItems.push(item);
+            renderScannedItem(item);
+            updateCounters();
+        });
+    }
+
+    // Finish scanning - send to server for comparison
+    btnFinish.addEventListener('click', function() {
+        if (scannedItems.length === 0) {
+            alert('No has escaneado ningun activo.');
+            return;
+        }
+
+        const payload = {
+            location_id: selectedLocationId,
+            scanned_codes: scannedItems.map(function(item) {
+                return { type: item.type, code: item.code };
+            })
+        };
+
+        fetch('/api/inventario/verificar', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify(payload)
+        })
+        .then(function(resp) { return resp.json(); })
+        .then(function(data) {
+            if (data.ok) {
+                resultsData = data;
+                renderResults(data);
+                showStep(stepResults);
+            } else {
+                alert(data.message || 'Error al procesar el inventario.');
+            }
+        })
+        .catch(function() {
+            alert('Error de conexion al procesar el inventario.');
+        });
+    });
+
+    // Render results
+    function renderResults(data) {
+        const summaryGrid = document.getElementById('summary-grid');
+        const resultsContent = document.getElementById('results-content');
+
+        summaryGrid.innerHTML =
+            '<div class="summary-card card-blue"><div class="summary-value">' + data.total_expected + '</div><div class="summary-label">Esperados</div></div>' +
+            '<div class="summary-card card-green"><div class="summary-value">' + data.found.length + '</div><div class="summary-label">Encontrados</div></div>' +
+            '<div class="summary-card card-red"><div class="summary-value">' + data.missing.length + '</div><div class="summary-label">No encontrados</div></div>' +
+            '<div class="summary-card card-yellow"><div class="summary-value">' + data.extras.length + '</div><div class="summary-label">Extras</div></div>';
+
+        let html = '';
+
+        // Found
+        if (data.found.length > 0) {
+            html += '<div class="result-section"><h4><span style="color:#10b981;">&#10003;</span> Encontrados <span class="badge" style="background:#10b981;">' + data.found.length + '</span></h4>';
+            html += '<div class="scanned-list"><table class="result-table"><thead><tr><th>Codigo interno</th><th>Nombre</th><th>Identificador</th></tr></thead><tbody>';
+            data.found.forEach(function(item) {
+                html += '<tr class="result-found"><td>' + escapeHtml(item.internal_code) + '</td><td>' + escapeHtml(item.name) + '</td><td style="font-family:monospace;font-size:0.82rem;">' + escapeHtml(item.scanned_code || '') + '</td></tr>';
+            });
+            html += '</tbody></table></div></div>';
+        }
+
+        // Missing
+        if (data.missing.length > 0) {
+            html += '<div class="result-section"><h4><span style="color:#ef4444;">&#10007;</span> No encontrados <span class="badge" style="background:#ef4444;">' + data.missing.length + '</span></h4>';
+            html += '<div class="scanned-list"><table class="result-table"><thead><tr><th>Codigo interno</th><th>Nombre</th><th>RFID / NFC / Barras</th></tr></thead><tbody>';
+            data.missing.forEach(function(item) {
+                html += '<tr class="result-missing"><td>' + escapeHtml(item.internal_code) + '</td><td>' + escapeHtml(item.name) + '</td><td style="font-family:monospace;font-size:0.82rem;">' + escapeHtml(item.identifier || '') + '</td></tr>';
+            });
+            html += '</tbody></table></div></div>';
+        }
+
+        // Extras
+        if (data.extras.length > 0) {
+            html += '<div class="result-section"><h4><span style="color:#f59e0b;">&#9888;</span> Extras <span class="badge" style="background:#f59e0b;color:#000;">' + data.extras.length + '</span></h4>';
+            html += '<div class="scanned-list"><table class="result-table"><thead><tr><th>Codigo escaneado</th><th>Tipo</th><th>Activo</th><th>Ubicacion registrada</th></tr></thead><tbody>';
+            data.extras.forEach(function(item) {
+                html += '<tr class="result-extra"><td style="font-family:monospace;">' + escapeHtml(item.code) + '</td><td>' + escapeHtml(item.type) + '</td><td>' + escapeHtml(item.asset_name || 'No registrado') + '</td><td>' + escapeHtml(item.registered_location || 'N/A') + '</td></tr>';
+            });
+            html += '</tbody></table></div></div>';
+        }
+
+        if (data.found.length === 0 && data.missing.length === 0 && data.extras.length === 0) {
+            html = '<p style="text-align:center; opacity:0.6;">No hay activos registrados en esta ubicacion y no se encontraron extras.</p>';
+        }
+
+        resultsContent.innerHTML = html;
+    }
+
+    // Export CSV
+    btnExport.addEventListener('click', function() {
+        if (!resultsData) return;
+
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/inventario-modo/exportar';
+        form.style.display = 'none';
+
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'results_data';
+        input.value = JSON.stringify(resultsData);
+        form.appendChild(input);
+
+        const locInput = document.createElement('input');
+        locInput.type = 'hidden';
+        locInput.name = 'location_name';
+        locInput.value = selectedLocationName;
+        form.appendChild(locInput);
+
+        // CSRF token
+        const csrfMeta = document.querySelector('input[name="csrf_token"]');
+        if (csrfMeta) {
+            const csrf = document.createElement('input');
+            csrf.type = 'hidden';
+            csrf.name = 'csrf_token';
+            csrf.value = csrfMeta.value;
+            form.appendChild(csrf);
+        }
+
+        document.body.appendChild(form);
+        form.submit();
+        document.body.removeChild(form);
+    });
+
+    // New inventory
+    btnNew.addEventListener('click', function() {
+        scannedItems = [];
+        resultsData = null;
+        locationSelect.value = '';
+        btnStart.disabled = true;
+        showStep(stepSetup);
+    });
+
+    // Keep scan input focused
+    document.addEventListener('click', function(e) {
+        if (stepScan.classList.contains('active') && e.target !== scanInput && !e.target.closest('.scan-type-selector') && !e.target.closest('button')) {
+            scanInput.focus();
+        }
+    });
+})();
+</script>
+{% endblock %}

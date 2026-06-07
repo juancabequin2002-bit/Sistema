@@ -1,0 +1,218 @@
+{% extends 'base.html' %}
+{% block page_title %}Escanear{% endblock %}
+{% block page_subtitle %}Interfaz unificada de lectura RFID, NFC y codigo de barras.{% endblock %}
+{% block content %}
+<section class="rfid-screen rfid-screen-inline">
+    <div class="rfid-card rfid-card-wide">
+        <div class="rfid-live-header">
+            <div class="rfid-icon">
+                {% if scan_type == 'nfc' %}
+                <i class="bi bi-phone"></i>
+                {% elif scan_type == 'barcode' %}
+                <i class="bi bi-qr-code-scan"></i>
+                {% else %}
+                <i class="bi bi-upc-scan"></i>
+                {% endif %}
+            </div>
+            <div>
+                <h2>Consola de escaneo unificada</h2>
+                <p>Selecciona el tipo de lectura, acerca la etiqueta o usa la camara. El campo se enfoca automaticamente.</p>
+            </div>
+        </div>
+
+        <!-- Tab selector -->
+        <div class="scanner-tabs mb-4">
+            <a href="{{ url_for('unified_scan', type='rfid') }}"
+               class="scanner-tab {% if scan_type == 'rfid' %}scanner-tab-active{% endif %}">
+                <i class="bi bi-upc-scan"></i> RFID
+            </a>
+            <a href="{{ url_for('unified_scan', type='nfc') }}"
+               class="scanner-tab {% if scan_type == 'nfc' %}scanner-tab-active{% endif %}">
+                <i class="bi bi-phone"></i> NFC
+            </a>
+            <a href="{{ url_for('unified_scan', type='barcode') }}"
+               class="scanner-tab {% if scan_type == 'barcode' %}scanner-tab-active{% endif %}">
+                <i class="bi bi-qr-code-scan"></i> Barras
+            </a>
+        </div>
+
+        <div class="rfid-live-rings">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+
+        <!-- Status indicator -->
+        <div class="scanner-status-strip" id="scanStatus">
+            <i class="bi bi-info-circle"></i>
+            {% if scan_type == 'nfc' %}
+            <span>Acerca un tag NFC al telefono o escribe el codigo manualmente.</span>
+            {% elif scan_type == 'barcode' %}
+            <span>Pulsa "Activar camara" para deteccion automatica o escribe el codigo.</span>
+            {% else %}
+            <span>Acerca la etiqueta al lector USB o escribe el codigo RFID.</span>
+            {% endif %}
+        </div>
+
+        <!-- Camera shell (visible only in barcode mode) -->
+        {% if scan_type == 'barcode' %}
+        <div class="barcode-camera-shell mb-4">
+            <video id="barcodeVideo" class="barcode-video" playsinline muted></video>
+        </div>
+        {% endif %}
+
+        <form method="post" class="rfid-form" id="scanForm">
+            {{ form.hidden_tag() }}
+            {{ form.scan_type(class="d-none", id="scanTypeField") }}
+            {{ form.code(class="form-control form-control-lg rfid-input", placeholder="Escanea o escribe el codigo", autofocus=true, id="scanCodeInput") }}
+            <div class="rfid-action-row">
+                {% if scan_type == 'nfc' %}
+                <button type="button" class="btn btn-outline-primary btn-lg px-4" id="startNfcBtn">Leer con NFC</button>
+                {% elif scan_type == 'barcode' %}
+                <button type="button" class="btn btn-outline-primary btn-lg px-4" id="startBarcodeBtn">Activar camara</button>
+                {% endif %}
+                {{ form.submit(class="btn btn-primary btn-lg px-4") }}
+                <a href="{{ url_for('create_asset') }}" class="btn btn-light btn-lg">Ingreso manual</a>
+            </div>
+        </form>
+
+        <div class="rfid-help-grid">
+            <div class="help-card">
+                <strong>Si existe</strong>
+                <span>Se abre la hoja de vida del activo asociado al codigo escaneado.</span>
+            </div>
+            <div class="help-card">
+                <strong>Si no existe</strong>
+                <span>Se redirige al formulario de creacion con el codigo precargado.</span>
+            </div>
+            <div class="help-card">
+                <strong>Auto-deteccion</strong>
+                <span>Selecciona la pestana correspondiente al tipo de etiqueta o dispositivo que usas.</span>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+{% block extra_css %}
+<style>
+.scanner-tabs {
+    display: flex;
+    gap: 0.5rem;
+    border-bottom: 2px solid rgba(255,255,255,0.08);
+    padding-bottom: 0.75rem;
+}
+.scanner-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.55rem 1.2rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.92rem;
+    color: rgba(255,255,255,0.55);
+    text-decoration: none;
+    transition: background 0.2s, color 0.2s;
+}
+.scanner-tab:hover {
+    background: rgba(255,255,255,0.06);
+    color: rgba(255,255,255,0.85);
+}
+.scanner-tab-active {
+    background: var(--accent, #6366f1);
+    color: #fff;
+}
+.scanner-tab-active:hover {
+    background: var(--accent, #6366f1);
+    color: #fff;
+}
+</style>
+{% endblock %}
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('scanForm');
+    const input = document.getElementById('scanCodeInput');
+    const status = document.getElementById('scanStatus');
+    const scanType = '{{ scan_type }}';
+
+    const setStatus = (message, level = 'info') => {
+        if (!status) return;
+        status.className = `scanner-status-strip status-${level}`;
+        status.innerHTML = `<i class="bi bi-info-circle"></i><span>${message}</span>`;
+    };
+
+    // NFC logic
+    if (scanType === 'nfc') {
+        const nfcBtn = document.getElementById('startNfcBtn');
+        if (nfcBtn) {
+            nfcBtn.addEventListener('click', async () => {
+                if (!('NDEFReader' in window)) {
+                    setStatus('Este navegador no expone Web NFC. Puedes ingresar el codigo manualmente o usar la futura app movil.', 'warning');
+                    return;
+                }
+                try {
+                    const reader = new NDEFReader();
+                    await reader.scan();
+                    setStatus('Escaneo NFC activo. Acerca la etiqueta al dispositivo.', 'success');
+                    reader.onreading = (event) => {
+                        const serial = event.serialNumber || '';
+                        if (serial) {
+                            input.value = serial;
+                            setStatus(`Etiqueta NFC detectada: ${serial}`, 'success');
+                            form.requestSubmit();
+                        } else {
+                            setStatus('Se detecto una etiqueta, pero no fue posible obtener el identificador.', 'warning');
+                        }
+                    };
+                    reader.onerror = () => setStatus('Ocurrio un error durante la lectura NFC.', 'danger');
+                } catch (error) {
+                    setStatus(`No fue posible iniciar NFC: ${error.message}`, 'danger');
+                }
+            });
+        }
+    }
+
+    // Barcode camera logic
+    if (scanType === 'barcode') {
+        const barcodeBtn = document.getElementById('startBarcodeBtn');
+        const video = document.getElementById('barcodeVideo');
+        if (barcodeBtn && video) {
+            let stream = null;
+            let timer = null;
+            barcodeBtn.addEventListener('click', async () => {
+                if (!('BarcodeDetector' in window) || !navigator.mediaDevices?.getUserMedia) {
+                    setStatus('Este navegador no soporta deteccion automatica. Puedes escribir el codigo manualmente.', 'warning');
+                    return;
+                }
+                try {
+                    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
+                    video.srcObject = stream;
+                    await video.play();
+                    const detector = new BarcodeDetector();
+                    setStatus('Camara activa. Acerca el codigo de barras o QR al encuadre.', 'success');
+                    timer = window.setInterval(async () => {
+                        try {
+                            const barcodes = await detector.detect(video);
+                            if (barcodes.length > 0) {
+                                const value = barcodes[0].rawValue || '';
+                                if (value) {
+                                    input.value = value;
+                                    setStatus(`Codigo detectado: ${value}`, 'success');
+                                    window.clearInterval(timer);
+                                    stream.getTracks().forEach((track) => track.stop());
+                                    form.requestSubmit();
+                                }
+                            }
+                        } catch (error) {
+                            setStatus(`Error al detectar el codigo: ${error.message}`, 'danger');
+                        }
+                    }, 900);
+                } catch (error) {
+                    setStatus(`No fue posible activar la camara: ${error.message}`, 'danger');
+                }
+            });
+        }
+    }
+});
+</script>
+{% endblock %}

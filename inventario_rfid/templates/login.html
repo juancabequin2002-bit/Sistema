@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block title %}Iniciar sesion{% endblock %}
+{% block auth_content %}
+<section class="login-page">
+    <div class="login-card shadow-sm">
+        <div class="login-brand">
+            <div class="auth-brand-lockup">
+                {% if BRAND_LOGO_EXISTS %}
+                <img class="auth-brand-logo" src="{{ url_for('static', filename=BRAND_LOGO_PATH) }}" alt="{{ PLATFORM_NAME }}">
+                {% else %}
+                <div class="brand-mark auth-brand-mark {% if BRAND_MARK_EXISTS %}brand-mark-image{% endif %}">
+                    {% if BRAND_MARK_EXISTS %}
+                    <img src="{{ url_for('static', filename=BRAND_MARK_PATH) }}" alt="{{ PLATFORM_NAME }}">
+                    {% else %}
+                    <i class="bi bi-broadcast-pin"></i>
+                    {% endif %}
+                </div>
+                {% endif %}
+                <div class="auth-brand-copy">
+                    <span class="brand-chip">{{ PLATFORM_NAME }}</span>
+                    <h2 class="auth-brand-title">{{ APP_NAME }}</h2>
+                </div>
+            </div>
+            <h1>{{ PLATFORM_TAGLINE }}</h1>
+            <p>Control de activos, archivo fisico, trazabilidad y hoja de vida completa en una sola plataforma comercial.</p>
+        </div>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        <form method="post" class="row g-3">
+            {{ form.hidden_tag() }}
+            <div class="col-12">
+                <label class="form-label">{{ form.username.label }}</label>
+                {{ form.username(class="form-control form-control-lg", placeholder="admin") }}
+            </div>
+            <div class="col-12">
+                <label class="form-label">{{ form.password.label }}</label>
+                {{ form.password(class="form-control form-control-lg", placeholder="********") }}
+            </div>
+            <div class="col-12">
+                {{ form.submit(class="btn btn-primary btn-lg w-100") }}
+            </div>
+            <div class="col-12 text-center">
+                <a href="{{ url_for('forgot_password') }}" class="small">Olvide mi contrasena</a>
+            </div>
+            <div class="col-12 text-center">
+                <a href="{{ url_for('resend_verification') }}" class="small text-muted">Reenviar verificacion de correo</a>
+            </div>
+            <div class="col-12 text-center mt-2">
+                <a href="{{ url_for('register') }}" class="small"><strong>Crear una cuenta nueva</strong></a>
+            </div>
+        </form>
+    </div>
+</section>
+{% endblock %}

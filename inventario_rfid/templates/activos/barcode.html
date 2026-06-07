@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{% block page_title %}Lectura de Barras{% endblock %}
+{% block page_subtitle %}Escaneo por camara o ingreso manual para codigos de barras y QR internos del inventario.{% endblock %}
+{% block content %}
+<section class="rfid-screen rfid-screen-inline">
+    <div class="rfid-card rfid-card-wide scanner-card-accent scanner-barcode">
+        <div class="rfid-live-header">
+            <div class="rfid-icon"><i class="bi bi-qr-code-scan"></i></div>
+            <div>
+                <h2>Consola de codigo de barras</h2>
+                <p>Usa la camara del dispositivo cuando el navegador lo permita o registra manualmente el codigo.</p>
+            </div>
+        </div>
+
+        <div class="scanner-status-strip" id="barcodeStatus">
+            <i class="bi bi-info-circle"></i>
+            <span>Pulsa "Activar camara" para intentar deteccion automatica o escribe el codigo si prefieres.</span>
+        </div>
+
+        <div class="barcode-camera-shell mb-4">
+            <video id="barcodeVideo" class="barcode-video" playsinline muted></video>
+        </div>
+
+        <form method="post" class="rfid-form" id="barcodeForm">
+            {{ form.hidden_tag() }}
+            {{ form.barcode_code(class="form-control form-control-lg rfid-input", placeholder="Escanea o escribe el codigo de barras", autofocus=true, id="barcodeCodeInput") }}
+            <div class="rfid-action-row">
+                <button type="button" class="btn btn-outline-primary btn-lg px-4" id="startBarcodeBtn">Activar camara</button>
+                {{ form.submit(class="btn btn-primary btn-lg px-4") }}
+                <a href="{{ url_for('create_asset', technology='barcode') }}" class="btn btn-light btn-lg">Ingreso manual</a>
+            </div>
+        </form>
+
+        <div class="rfid-help-grid">
+            <div class="help-card">
+                <strong>Camara del dispositivo</strong>
+                <span>El sistema intentara usar deteccion nativa del navegador cuando este disponible.</span>
+            </div>
+            <div class="help-card">
+                <strong>Compatibilidad gradual</strong>
+                <span>Si el navegador no soporta deteccion, el ingreso manual sigue siendo totalmente funcional.</span>
+            </div>
+            <div class="help-card">
+                <strong>Listo para app</strong>
+                <span>La estructura backend queda lista para una app movil con lector profesional despues.</span>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const button = document.getElementById('startBarcodeBtn');
+    const input = document.getElementById('barcodeCodeInput');
+    const form = document.getElementById('barcodeForm');
+    const video = document.getElementById('barcodeVideo');
+    const status = document.getElementById('barcodeStatus');
+    if (!button || !input || !form || !video || !status) return;
+
+    let stream = null;
+    let timer = null;
+
+    const setStatus = (message, level = 'info') => {
+        status.className = `scanner-status-strip status-${level}`;
+        status.innerHTML = `<i class="bi bi-info-circle"></i><span>${message}</span>`;
+    };
+
+    button.addEventListener('click', async () => {
+        if (!('BarcodeDetector' in window) || !navigator.mediaDevices?.getUserMedia) {
+            setStatus('Este navegador no soporta deteccion automatica. Puedes escribir el codigo manualmente o usar la app movil despues.', 'warning');
+            return;
+        }
+
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
+            video.srcObject = stream;
+            await video.play();
+            const detector = new BarcodeDetector();
+            setStatus('Camara activa. Acerca el codigo de barras o QR al encuadre.', 'success');
+
+            timer = window.setInterval(async () => {
+                try {
+                    const barcodes = await detector.detect(video);
+                    if (barcodes.length > 0) {
+                        const value = barcodes[0].rawValue || '';
+                        if (value) {
+                            input.value = value;
+                            setStatus(`Codigo detectado: ${value}`, 'success');
+                            window.clearInterval(timer);
+                            stream.getTracks().forEach((track) => track.stop());
+                            form.requestSubmit();
+                        }
+                    }
+                } catch (error) {
+                    setStatus(`Error al detectar el codigo: ${error.message}`, 'danger');
+                }
+            }, 900);
+        } catch (error) {
+            setStatus(`No fue posible activar la camara: ${error.message}`, 'danger');
+        }
+    });
+});
+</script>
+{% endblock %}

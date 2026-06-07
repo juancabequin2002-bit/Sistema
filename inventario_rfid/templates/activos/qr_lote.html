@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+{% block page_title %}Exportar QR en Lote{% endblock %}
+{% block page_subtitle %}Selecciona los activos para generar un PDF con etiquetas QR listas para imprimir en papel adhesivo.{% endblock %}
+{% block content %}
+<section class="page-grid page-grid-wide">
+    <div class="card-panel">
+        <div class="panel-header">
+            <h3>Seleccionar activos</h3>
+            <span class="text-muted small">Marca los activos que deseas incluir en la hoja de etiquetas QR (3 columnas x 8 filas por pagina)</span>
+        </div>
+
+        <form method="post" id="qrBatchForm">
+            <div class="row g-3 mb-3">
+                <div class="col-lg-6">
+                    <input type="text" id="qrSearchInput" class="form-control" placeholder="Buscar por codigo interno, nombre o tipo...">
+                </div>
+                <div class="col-lg-3 d-flex align-items-center">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="selectAllCheckbox">
+                        <label class="form-check-label" for="selectAllCheckbox">Seleccionar todos (visibles)</label>
+                    </div>
+                </div>
+                <div class="col-lg-3 text-end">
+                    <span class="badge bg-primary fs-6" id="selectedCount">0 seleccionados</span>
+                </div>
+            </div>
+
+            <div class="table-responsive table-wrap-modern" style="max-height: 500px; overflow-y: auto;">
+                <table class="table table-clean table-modern align-middle" id="qrAssetTable">
+                    <thead>
+                        <tr>
+                            <th style="width: 40px;"></th>
+                            <th>Codigo interno</th>
+                            <th>Nombre</th>
+                            <th>Tipo</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for asset in assets %}
+                        <tr class="qr-asset-row">
+                            <td>
+                                <input class="form-check-input asset-checkbox" type="checkbox" name="asset_ids" value="{{ asset.id }}">
+                            </td>
+                            <td><code class="code-chip">{{ asset.internal_code }}</code></td>
+                            <td>{{ asset.name }}</td>
+                            <td><span class="soft-badge">{{ asset.asset_type }}</span></td>
+                            <td><span class="status-badge status-{{ asset.status }}">{{ asset.status.replace('_', ' ') }}</span></td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="5" class="text-center text-muted py-5">No hay activos registrados.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="mt-4 d-flex justify-content-between align-items-center">
+                <a href="{{ url_for('list_assets') }}" class="btn btn-outline-secondary">Volver al listado</a>
+                <button type="submit" class="btn btn-primary" id="generateBtn" disabled>
+                    <i class="bi bi-file-earmark-pdf"></i> Generar PDF con QR
+                </button>
+            </div>
+        </form>
+    </div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('qrSearchInput');
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    const assetRows = document.querySelectorAll('.qr-asset-row');
+    const checkboxes = document.querySelectorAll('.asset-checkbox');
+    const selectedCount = document.getElementById('selectedCount');
+    const generateBtn = document.getElementById('generateBtn');
+
+    function updateCount() {
+        const checked = document.querySelectorAll('.asset-checkbox:checked').length;
+        selectedCount.textContent = checked + ' seleccionado' + (checked !== 1 ? 's' : '');
+        generateBtn.disabled = checked === 0;
+    }
+
+    searchInput.addEventListener('input', function() {
+        const query = this.value.toLowerCase();
+        assetRows.forEach(function(row) {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(query) ? '' : 'none';
+        });
+        // Update select all state
+        selectAllCheckbox.checked = false;
+    });
+
+    selectAllCheckbox.addEventListener('change', function() {
+        const isChecked = this.checked;
+        assetRows.forEach(function(row) {
+            if (row.style.display !== 'none') {
+                const cb = row.querySelector('.asset-checkbox');
+                if (cb) cb.checked = isChecked;
+            }
+        });
+        updateCount();
+    });
+
+    checkboxes.forEach(function(cb) {
+        cb.addEventListener('change', updateCount);
+    });
+
+    updateCount();
+});
+</script>
+{% endblock %}

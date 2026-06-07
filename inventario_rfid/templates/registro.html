@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% block title %}Crear cuenta{% endblock %}
+{% block auth_content %}
+<section class="login-page">
+    <div class="login-card shadow-sm">
+        <div class="login-brand">
+            <div class="auth-brand-lockup">
+                {% if BRAND_LOGO_EXISTS %}
+                <img class="auth-brand-logo" src="{{ url_for('static', filename=BRAND_LOGO_PATH) }}" alt="{{ PLATFORM_NAME }}">
+                {% else %}
+                <div class="brand-mark auth-brand-mark {% if BRAND_MARK_EXISTS %}brand-mark-image{% endif %}">
+                    {% if BRAND_MARK_EXISTS %}
+                    <img src="{{ url_for('static', filename=BRAND_MARK_PATH) }}" alt="{{ PLATFORM_NAME }}">
+                    {% else %}
+                    <i class="bi bi-broadcast-pin"></i>
+                    {% endif %}
+                </div>
+                {% endif %}
+                <div class="auth-brand-copy">
+                    <span class="brand-chip">{{ PLATFORM_NAME }}</span>
+                    <h2 class="auth-brand-title">{{ APP_NAME }}</h2>
+                </div>
+            </div>
+            <h1>Crear cuenta</h1>
+            <p>Registrate para acceder al sistema de inventario y trazabilidad.</p>
+        </div>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        <form method="post" class="row g-3">
+            {{ form.hidden_tag() }}
+            <div class="col-12">
+                <label class="form-label">{{ form.full_name.label }}</label>
+                {{ form.full_name(class="form-control form-control-lg", placeholder="Tu nombre completo") }}
+                {% for error in form.full_name.errors %}
+                <div class="text-danger small mt-1">{{ error }}</div>
+                {% endfor %}
+            </div>
+            <div class="col-12">
+                <label class="form-label">{{ form.username.label }}</label>
+                {{ form.username(class="form-control form-control-lg", placeholder="nombre.usuario") }}
+                {% for error in form.username.errors %}
+                <div class="text-danger small mt-1">{{ error }}</div>
+                {% endfor %}
+            </div>
+            <div class="col-12">
+                <label class="form-label">{{ form.email.label }}</label>
+                {{ form.email(class="form-control form-control-lg", placeholder="tu@correo.com") }}
+                {% for error in form.email.errors %}
+                <div class="text-danger small mt-1">{{ error }}</div>
+                {% endfor %}
+            </div>
+            <div class="col-12">
+                <label class="form-label">{{ form.password.label }}</label>
+                {{ form.password(class="form-control form-control-lg", placeholder="Minimo 8 caracteres") }}
+                {% for error in form.password.errors %}
+                <div class="text-danger small mt-1">{{ error }}</div>
+                {% endfor %}
+            </div>
+            <div class="col-12">
+                <label class="form-label">{{ form.confirm_password.label }}</label>
+                {{ form.confirm_password(class="form-control form-control-lg", placeholder="Repite tu contrasena") }}
+                {% for error in form.confirm_password.errors %}
+                <div class="text-danger small mt-1">{{ error }}</div>
+                {% endfor %}
+            </div>
+            <div class="col-12">
+                {{ form.submit(class="btn btn-primary btn-lg w-100") }}
+            </div>
+            <div class="col-12 text-center">
+                <a href="{{ url_for('login') }}" class="small">Ya tengo una cuenta - Iniciar sesion</a>
+            </div>
+        </form>
+    </div>
+</section>
+{% endblock %}

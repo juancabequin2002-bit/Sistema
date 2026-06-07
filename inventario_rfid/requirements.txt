@@ -1,0 +1,15 @@
+Flask==3.1.1
+Flask-Login==0.6.3
+Flask-SQLAlchemy==3.1.1
+Flask-WTF==1.2.2
+Flask-Mail==0.10.0
+WTForms==3.2.1
+email-validator==2.2.0
+requests==2.32.3
+python-dotenv==1.0.1
+gpt4all==2.8.2
+psycopg2-binary==2.9.10
+cryptography==45.0.2
+itsdangerous==2.2.0
+reportlab==4.4.0
+qrcode[pil]==8.2

@@ -1,0 +1,12 @@
+{{ app_name }}
+
+Hola, {{ user.full_name }}
+
+Tu cuenta ha sido creada correctamente en el Sistema de Inventario RFID 125 kHz. Para proteger tu informacion y garantizar la seguridad de tu cuenta, necesitamos verificar que este correo te pertenece.
+
+Verifica tu cuenta aqui:
+{{ action_url }}
+
+Este enlace expirara en {{ expiration_hours }} horas por tu seguridad.
+
+Si no creaste esta cuenta, puedes ignorar este correo.

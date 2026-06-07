@@ -1,0 +1,202 @@
+<form method="post" class="row g-4">
+    {{ form.hidden_tag() }}
+
+    <section class="col-12">
+        <div class="form-stage-header">
+            <div>
+                <span class="stage-chip">Paso 1</span>
+                <h3>Identificacion del registro</h3>
+                <p>Define RFID, codigo interno y clasificacion base para activos, expedientes, carpetas o archivos fisicos.</p>
+            </div>
+        </div>
+        <div class="card-panel form-panel">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">{{ form.rfid_code.label }}</label>
+                    {{ form.rfid_code(class="form-control form-control-modern", placeholder="Ej. RFID-000123 o dejar vacio si solo usas NFC/barras") }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">{{ form.nfc_code.label }}</label>
+                    {{ form.nfc_code(class="form-control form-control-modern", placeholder="UID o codigo NFC") }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">{{ form.barcode_code.label }}</label>
+                    {{ form.barcode_code(class="form-control form-control-modern", placeholder="EAN, Code128, QR interno...") }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">{{ form.identification_technology.label }}</label>
+                    {{ form.identification_technology(class="form-select form-control-modern") }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">{{ form.internal_code.label }}</label>
+                    {{ form.internal_code(class="form-control form-control-modern", placeholder="Ej. ACT-2026-001") }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">{{ form.name.label }}</label>
+                    {{ form.name(class="form-control form-control-modern", placeholder="Nombre visible del registro") }}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">{{ form.asset_type.label }}</label>
+                    {{ form.asset_type(class="form-select form-control-modern") }}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">{{ form.category.label }}</label>
+                    {{ form.category(class="form-control form-control-modern", placeholder="Categoria o serie documental") }}
+                </div>
+                <div class="col-md-3" id="field-brand">
+                    <label class="form-label">{{ form.brand.label }}</label>
+                    {{ form.brand(class="form-control form-control-modern", placeholder="Marca, fondo o procedencia") }}
+                </div>
+                <div class="col-md-3" id="field-model">
+                    <label class="form-label">{{ form.model.label }}</label>
+                    {{ form.model(class="form-control form-control-modern", placeholder="Modelo, caja, estanteria...") }}
+                </div>
+                <div class="col-12">
+                    <div class="note-box compact-note">
+                        <p class="mb-0">Si no asignas RFID fisico, el sistema generara un identificador virtual interno para conservar compatibilidad con el inventario actual.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="col-12" id="section-compra">
+        <div class="form-stage-header">
+            <div>
+                <span class="stage-chip">Paso 2</span>
+                <h3>Compra, proveedor y garantia</h3>
+                <p>Captura datos financieros o de respaldo cuando existan.</p>
+            </div>
+        </div>
+        <div class="card-panel form-panel">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">{{ form.serial_number.label }}</label>
+                    {{ form.serial_number(class="form-control form-control-modern", placeholder="Serial, consecutivo o folio") }}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">{{ form.purchase_date.label }}</label>
+                    {{ form.purchase_date(class="form-control form-control-modern") }}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">{{ form.invoice_number.label }}</label>
+                    {{ form.invoice_number(class="form-control form-control-modern", placeholder="Factura o soporte") }}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">{{ form.vendor.label }}</label>
+                    {{ form.vendor(class="form-control form-control-modern", placeholder="Proveedor o origen") }}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">{{ form.purchase_value.label }}</label>
+                    {{ form.purchase_value(class="form-control form-control-modern", placeholder="0.00") }}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">{{ form.warranty_until.label }}</label>
+                    {{ form.warranty_until(class="form-control form-control-modern") }}
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="col-12">
+        <div class="form-stage-header">
+            <div>
+                <span class="stage-chip">Paso 3</span>
+                <h3>Ubicacion, responsable y estado</h3>
+                <p>Define la operacion actual del elemento dentro del sistema.</p>
+            </div>
+        </div>
+        <div class="card-panel form-panel">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">{{ form.responsible_name.label }}</label>
+                    {{ form.responsible_name(class="form-control form-control-modern", placeholder="Nombre del responsable") }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">{{ form.location_id.label }}</label>
+                    <div class="d-flex gap-2">
+                        {{ form.location_id(class="form-select form-control-modern") }}
+                        {% if current_user.role == ROLE_ADMIN %}
+                        <a href="{{ url_for('create_location', next=request.path) }}" class="btn btn-light btn-square">+</a>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">{{ form.status.label }}</label>
+                    {{ form.status(class="form-select form-control-modern") }}
+                </div>
+                <div class="col-12">
+                    <label class="form-label">{{ form.observations.label }}</label>
+                    {{ form.observations(class="form-control form-control-modern", rows="5", placeholder="Notas tecnicas, descripcion documental, estado de conservacion, observaciones de operacion...") }}
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="col-12">
+        <div class="form-stage-header">
+            <div>
+                <span class="stage-chip">Paso 4</span>
+                <h3>Etiqueta de identificacion</h3>
+                <p>Elige si deseas generar un codigo QR imprimible o si usaras una etiqueta RFID fisica.</p>
+            </div>
+        </div>
+        <div class="card-panel form-panel">
+            <div class="row g-3">
+                <div class="col-12">
+                    <div class="label-type-options">
+                        {% for choice in form.label_type.iter_choices() %}
+                        <label class="label-type-option {% if choice[2] %}active{% endif %}">
+                            <input type="radio" name="{{ form.label_type.name }}" value="{{ choice[0] }}" {% if choice[2] %}checked{% endif %}>
+                            <div class="label-type-content">
+                                {% if choice[0] == 'qr' %}
+                                <span class="label-type-icon"><i class="bi bi-qr-code"></i></span>
+                                <strong>Generar codigo QR</strong>
+                                <span class="label-type-desc">Se creara un QR unico con el codigo interno. Podras descargarlo e imprimirlo.</span>
+                                {% elif choice[0] == 'rfid' %}
+                                <span class="label-type-icon"><i class="bi bi-broadcast-pin"></i></span>
+                                <strong>Solo etiqueta RFID</strong>
+                                <span class="label-type-desc">Ya tengo un tag RFID fisico asignado. No necesito QR adicional.</span>
+                                {% else %}
+                                <span class="label-type-icon"><i class="bi bi-x-circle"></i></span>
+                                <strong>No generar etiqueta</strong>
+                                <span class="label-type-desc">Registrar el activo sin generar ningun identificador visual adicional.</span>
+                                {% endif %}
+                            </div>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="col-12">
+        <div class="form-footer-actions">
+            {{ form.submit(class="btn btn-primary btn-lg") }}
+            <a href="{{ url_for('list_assets') }}" class="btn btn-light btn-lg">Cancelar</a>
+        </div>
+    </section>
+</form>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var docTypes = ['Carpeta', 'Documento', 'Expediente', 'Archivo fisico', 'Caja'];
+    var typeSelect = document.getElementById('asset_type');
+    var sectionCompra = document.getElementById('section-compra');
+    var fieldBrand = document.getElementById('field-brand');
+    var fieldModel = document.getElementById('field-model');
+
+    if (!typeSelect) return;
+
+    function toggleFields() {
+        var isDoc = docTypes.indexOf(typeSelect.value) !== -1;
+        sectionCompra.style.display = isDoc ? 'none' : '';
+        fieldBrand.style.display = isDoc ? 'none' : '';
+        fieldModel.style.display = isDoc ? 'none' : '';
+    }
+
+    typeSelect.addEventListener('change', toggleFields);
+    toggleFields();
+});
+</script>

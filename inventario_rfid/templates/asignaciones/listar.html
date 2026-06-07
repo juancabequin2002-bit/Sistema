@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block page_title %}Asignaciones{% endblock %}
+{% block page_subtitle %}Historial funcional de responsables por activo, expediente o archivo fisico.{% endblock %}
+{% block content %}
+<section class="card-panel">
+    <div class="panel-header">
+        <h3>Historial de asignaciones</h3>
+        <span class="text-muted small">Cambios de responsable con trazabilidad completa</span>
+    </div>
+    <div class="table-responsive table-wrap-modern">
+        <table class="table table-clean table-modern align-middle">
+            <thead><tr><th>Fecha</th><th>Activo</th><th>Anterior</th><th>Nuevo</th><th>Asignado por</th><th>Observaciones</th></tr></thead>
+            <tbody>
+                {% for item in assignments %}
+                <tr>
+                    <td>{{ item.assignment_date }}</td>
+                    <td><a href="{{ url_for('asset_detail', asset_id=item.asset.id) }}">{{ item.asset.internal_code }} - {{ item.asset.name }}</a></td>
+                    <td>{{ item.previous_responsible or 'N/D' }}</td>
+                    <td>{{ item.new_responsible }}</td>
+                    <td>{{ item.assigned_by.full_name }}</td>
+                    <td>{{ item.observations or 'N/D' }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6" class="text-center text-muted py-5">No hay asignaciones registradas.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

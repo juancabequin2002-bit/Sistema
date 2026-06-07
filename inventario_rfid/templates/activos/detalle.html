@@ -1,0 +1,312 @@
+{% extends 'base.html' %}
+{% block page_title %}Detalle del Activo{% endblock %}
+{% block page_subtitle %}Hoja de vida visual, historial completo, documentos y acciones operativas en una vista clara y lista para imprimir.{% endblock %}
+{% block content %}
+<section class="detail-layout printable-area">
+    <div class="detail-main-column">
+        <section class="card-panel detail-shell">
+            <div class="detail-hero">
+                <div class="detail-title-wrap">
+                    <div class="detail-preview-tile"><i class="bi bi-laptop"></i></div>
+                    <div>
+                        <div class="detail-label">Detalle del registro</div>
+                        <h2>{{ asset.name }}</h2>
+                        <p>{{ asset.asset_type }} | {{ asset.category or 'Sin categoria' }}</p>
+                    </div>
+                </div>
+                <div class="detail-badges">
+                    <span class="status-badge status-{{ asset.status }}">{{ asset.status.replace('_', ' ') }}</span>
+                    <span class="soft-badge">RFID {{ asset.rfid_code }}</span>
+                    {% if asset.nfc_code %}<span class="soft-badge">NFC {{ asset.nfc_code }}</span>{% endif %}
+                    {% if asset.barcode_code %}<span class="soft-badge">BAR {{ asset.barcode_code }}</span>{% endif %}
+                    <span class="soft-badge">{{ asset.internal_code }}</span>
+                </div>
+            </div>
+
+            <div class="detail-kpis">
+                <div class="mini-kpi"><span>Ubicacion</span><strong>{{ asset.current_location }}</strong></div>
+                <div class="mini-kpi"><span>Responsable</span><strong>{{ asset.current_responsible }}</strong></div>
+                <div class="mini-kpi"><span>Garantia</span><strong>{{ asset.warranty_until or 'N/D' }}</strong></div>
+                <div class="mini-kpi"><span>Factura</span><strong>{{ asset.invoice_number or 'N/D' }}</strong></div>
+            </div>
+
+            {% if qr_generated %}
+            <div class="alert alert-success d-flex align-items-center gap-3 mb-3">
+                <i class="bi bi-qr-code" style="font-size:1.5rem"></i>
+                <div>
+                    <strong>Codigo QR generado exitosamente.</strong>
+                    <a href="{{ url_for('asset_qr', asset_id=asset.id) }}" class="btn btn-sm btn-primary ms-2">Descargar QR</a>
+                    <a href="{{ url_for('asset_qr_view', asset_id=asset.id) }}" class="btn btn-sm btn-outline-primary ms-1" target="_blank">Ver QR</a>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="action-row action-row-sticky">
+                {% if current_user.role in [ROLE_ADMIN, ROLE_TECH] and (asset.status != 'dado_de_baja' or current_user.role == ROLE_ADMIN) %}
+                <a href="{{ url_for('edit_asset', asset_id=asset.id) }}" class="btn btn-primary">Editar</a>
+                {% endif %}
+                {% if current_user.role == ROLE_ADMIN %}
+                <a href="{{ url_for('assign_asset', asset_id=asset.id) }}" class="btn btn-outline-primary">Asignar</a>
+                {% endif %}
+                {% if current_user.role in [ROLE_ADMIN, ROLE_TECH] %}
+                <a href="{{ url_for('create_maintenance', asset_id=asset.id) }}" class="btn btn-outline-primary">Mantenimiento</a>
+                <a href="{{ url_for('upload_document', asset_id=asset.id) }}" class="btn btn-outline-primary">Subir documento</a>
+                {% endif %}
+                {% if current_user.role == ROLE_ADMIN and not asset.disposal %}
+                <a href="{{ url_for('dispose_asset', asset_id=asset.id) }}" class="btn btn-danger">Dar de baja</a>
+                {% endif %}
+                <a href="{{ url_for('asset_qr', asset_id=asset.id) }}" class="btn btn-outline-secondary"><i class="bi bi-qr-code"></i> QR</a>
+                <button class="btn btn-light" onclick="window.print()">Imprimir / PDF</button>
+            </div>
+
+            <ul class="nav nav-tabs detail-tabs mt-4" id="assetTabs" role="tablist">
+                <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#general">Informacion</button></li>
+                <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#historial">Historial</button></li>
+                <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#mantenimientos">Mantenimientos <span class="tab-count">{{ asset.maintenances|length }}</span></button></li>
+                <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#documentos">Documentos <span class="tab-count">{{ asset.documents|length }}</span></button></li>
+                <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#asignaciones">Asignaciones <span class="tab-count">{{ asset.assignments|length }}</span></button></li>
+                <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#movimientos">Movimientos <span class="tab-count">{{ asset.movements|length }}</span></button></li>
+                <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#baja">Baja</button></li>
+            </ul>
+
+            <div class="tab-content pt-4">
+                <div class="tab-pane fade show active" id="general">
+                    <div class="detail-section-grid">
+                        <div class="detail-info-card">
+                            <h4>Informacion general</h4>
+                            <div class="detail-grid">
+                                <div><span>RFID</span><strong>{{ asset.rfid_code }}</strong></div>
+                                <div><span>NFC</span><strong>{{ asset.nfc_code or 'N/D' }}</strong></div>
+                                <div><span>Codigo de barras</span><strong>{{ asset.barcode_code or 'N/D' }}</strong></div>
+                                <div><span>Tecnologia</span><strong>{{ asset.identification_technology.replace('_', ' ') }}</strong></div>
+                                <div><span>Codigo interno</span><strong>{{ asset.internal_code }}</strong></div>
+                                <div><span>Tipo</span><strong>{{ asset.asset_type }}</strong></div>
+                                <div><span>Categoria</span><strong>{{ asset.category or 'N/D' }}</strong></div>
+                                <div><span>Marca</span><strong>{{ asset.brand or 'N/D' }}</strong></div>
+                                <div><span>Modelo</span><strong>{{ asset.model or 'N/D' }}</strong></div>
+                                <div><span>Serial</span><strong>{{ asset.serial_number or 'N/D' }}</strong></div>
+                                <div><span>Fecha de compra</span><strong>{{ asset.purchase_date or 'N/D' }}</strong></div>
+                                <div><span>Proveedor</span><strong>{{ asset.vendor or 'N/D' }}</strong></div>
+                                <div><span>Valor</span><strong>{{ asset.purchase_value or 'N/D' }}</strong></div>
+                            </div>
+                        </div>
+
+                        <div class="detail-info-card">
+                            <h4>Operacion actual</h4>
+                            <div class="detail-grid">
+                                <div><span>Estado</span><strong>{{ asset.status.replace('_', ' ') }}</strong></div>
+                                <div><span>Responsable</span><strong>{{ asset.current_responsible }}</strong></div>
+                                <div><span>Ubicacion</span><strong>{{ asset.current_location }}</strong></div>
+                                <div><span>Factura</span><strong>{{ asset.invoice_number or 'N/D' }}</strong></div>
+                                <div><span>Garantia</span><strong>{{ asset.warranty_until or 'N/D' }}</strong></div>
+                                <div><span>Creado</span><strong>{{ asset.created_at.strftime('%Y-%m-%d') }}</strong></div>
+                            </div>
+                            <div class="note-box mt-4">
+                                <h4>Observaciones</h4>
+                                <p>{{ asset.observations or 'Sin observaciones registradas.' }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if current_user.role in [ROLE_ADMIN, ROLE_TECH, ROLE_AUDITOR] %}
+                    <div class="card-subpanel mt-4">
+                        <div class="panel-header">
+                            <h3>Asistente IA local con GPT4All</h3>
+                            <span class="small text-muted">Resumen tecnico, riesgos y siguientes pasos</span>
+                        </div>
+                        <form id="aiForm" action="{{ url_for('asset_ai', asset_id=asset.id) }}" method="post">
+                            {{ ai_form.hidden_tag() }}
+                            {{ ai_form.question(class="form-control ai-textarea", rows="3", placeholder="Ejemplo: resume el estado actual, riesgos y mantenimiento recomendado") }}
+                            <div class="mt-3 d-flex gap-2 align-items-center">
+                                {{ ai_form.submit(class="btn btn-primary") }}
+                                <span class="small text-muted">Consulta local con GPT4All si esta configurado en el equipo.</span>
+                            </div>
+                        </form>
+                        <div id="aiResponse" class="ai-response mt-3"></div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="tab-pane fade" id="historial">
+                    <div class="timeline">
+                        {% for event in history %}
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div>
+                                <strong>{{ event.label }}</strong>
+                                <p>{{ event.detail }}</p>
+                                <small>{{ event.date.strftime('%Y-%m-%d %H:%M') }}</small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="mantenimientos">
+                    <div class="table-responsive">
+                        <table class="table table-clean">
+                            <thead><tr><th>Fecha</th><th>Tipo</th><th>Tecnico</th><th>Descripcion</th><th>Proximo</th></tr></thead>
+                            <tbody>
+                                {% for item in asset.maintenances %}
+                                <tr>
+                                    <td>{{ item.maintenance_date }}</td>
+                                    <td>{{ item.maintenance_type }}</td>
+                                    <td>{{ item.technician_name }}</td>
+                                    <td>{{ item.description }}</td>
+                                    <td>{{ item.next_maintenance_date or 'N/D' }}</td>
+                                </tr>
+                                {% else %}
+                                <tr><td colspan="5" class="text-center text-muted">Sin mantenimientos registrados.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="documentos">
+                    <div class="document-quick-grid mb-4">
+                        {% for item in asset.documents[:4] %}
+                        <a href="{{ url_for('download_document', filename=item.stored_filename) }}" class="document-quick-card">
+                            <div class="document-quick-icon"><i class="bi bi-file-earmark-text"></i></div>
+                            <strong>{{ item.document_name }}</strong>
+                            <small>{{ item.document_type }}</small>
+                        </a>
+                        {% else %}
+                        <div class="empty-panel">No hay adjuntos rapidos disponibles.</div>
+                        {% endfor %}
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-clean">
+                            <thead><tr><th>Documento</th><th>Tipo</th><th>Fecha</th><th>Usuario</th><th></th></tr></thead>
+                            <tbody>
+                                {% for item in asset.documents %}
+                                <tr>
+                                    <td>{{ item.document_name }}</td>
+                                    <td>{{ item.document_type }}</td>
+                                    <td>{{ item.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td>{{ item.uploaded_by.full_name }}</td>
+                                    <td><a class="btn btn-sm btn-light" href="{{ url_for('download_document', filename=item.stored_filename) }}">Descargar</a></td>
+                                </tr>
+                                {% else %}
+                                <tr><td colspan="5" class="text-center text-muted">Sin documentos asociados.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="asignaciones">
+                    <div class="table-responsive">
+                        <table class="table table-clean">
+                            <thead><tr><th>Fecha</th><th>Responsable anterior</th><th>Responsable nuevo</th><th>Usuario</th><th>Observaciones</th></tr></thead>
+                            <tbody>
+                                {% for item in asset.assignments %}
+                                <tr>
+                                    <td>{{ item.assignment_date }}</td>
+                                    <td>{{ item.previous_responsible or 'N/D' }}</td>
+                                    <td>{{ item.new_responsible }}</td>
+                                    <td>{{ item.assigned_by.full_name }}</td>
+                                    <td>{{ item.observations or 'N/D' }}</td>
+                                </tr>
+                                {% else %}
+                                <tr><td colspan="5" class="text-center text-muted">Sin asignaciones registradas.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="movimientos">
+                    <div class="table-responsive">
+                        <table class="table table-clean">
+                            <thead><tr><th>Fecha</th><th>Tipo</th><th>Origen</th><th>Destino</th><th>Usuario</th></tr></thead>
+                            <tbody>
+                                {% for item in asset.movements %}
+                                <tr>
+                                    <td>{{ item.movement_date }}</td>
+                                    <td>{{ item.movement_type }}</td>
+                                    <td>{{ item.from_location or 'N/D' }}</td>
+                                    <td>{{ item.to_location or 'N/D' }}</td>
+                                    <td>{{ item.moved_by.full_name }}</td>
+                                </tr>
+                                {% else %}
+                                <tr><td colspan="5" class="text-center text-muted">Sin movimientos registrados.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="baja">
+                    {% if asset.disposal %}
+                    <div class="detail-grid">
+                        <div><span>Fecha de baja</span><strong>{{ asset.disposal.disposal_date }}</strong></div>
+                        <div><span>Autorizado por</span><strong>{{ asset.disposal.authorized_by.full_name }}</strong></div>
+                        <div><span>Motivo</span><strong>{{ asset.disposal.reason }}</strong></div>
+                        <div><span>Soporte</span><strong>{% if asset.disposal.support_filename %}<a href="{{ url_for('download_document', filename=asset.disposal.support_filename) }}">Descargar</a>{% else %}N/D{% endif %}</strong></div>
+                    </div>
+                    <div class="note-box mt-4">
+                        <h4>Observaciones de baja</h4>
+                        <p>{{ asset.disposal.observations or 'Sin observaciones adicionales.' }}</p>
+                    </div>
+                    {% else %}
+                    <div class="empty-panel">Este activo no ha sido dado de baja.</div>
+                    {% endif %}
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <aside class="detail-side-column">
+        <section class="card-panel side-panel">
+            <div class="panel-header mb-3">
+                <h3>Resumen rapido</h3>
+                <span class="status-badge status-{{ asset.status }}">{{ asset.status.replace('_', ' ') }}</span>
+            </div>
+            <div class="side-info-list">
+                <div><span>RFID</span><strong>{{ asset.rfid_code }}</strong></div>
+                <div><span>NFC</span><strong>{{ asset.nfc_code or 'N/D' }}</strong></div>
+                <div><span>Barras</span><strong>{{ asset.barcode_code or 'N/D' }}</strong></div>
+                <div><span>Tipo</span><strong>{{ asset.asset_type }}</strong></div>
+                <div><span>Categoria</span><strong>{{ asset.category or 'N/D' }}</strong></div>
+                <div><span>Responsable</span><strong>{{ asset.current_responsible }}</strong></div>
+                <div><span>Ubicacion</span><strong>{{ asset.current_location }}</strong></div>
+                <div><span>Proveedor</span><strong>{{ asset.vendor or 'N/D' }}</strong></div>
+            </div>
+            <div class="note-box mt-4">
+                <h4>Adjuntos rapidos</h4>
+                {% for item in asset.documents[:3] %}
+                <a href="{{ url_for('download_document', filename=item.stored_filename) }}" class="attachment-mini">
+                    <i class="bi bi-paperclip"></i>
+                    <span>{{ item.document_name }}</span>
+                </a>
+                {% else %}
+                <p class="mb-0">Sin adjuntos disponibles.</p>
+                {% endfor %}
+            </div>
+        </section>
+    </aside>
+</section>
+{% endblock %}
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('aiForm');
+    const responseBox = document.getElementById('aiResponse');
+    if (!form || !responseBox) return;
+
+    form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        responseBox.innerHTML = '<div class="toast-alert toast-info"><div class="toast-alert-icon"><i class="bi bi-stars"></i></div><div>Consultando GPT4All local...</div></div>';
+        const formData = new FormData(form);
+        const request = await fetch(form.action, { method: 'POST', body: formData });
+        const data = await request.json();
+        if (data.ok) {
+            responseBox.innerHTML = `<div class="ai-answer-card"><pre>${data.answer}</pre></div>`;
+        } else {
+            responseBox.innerHTML = `<div class="toast-alert toast-warning"><div class="toast-alert-icon"><i class="bi bi-exclamation-triangle"></i></div><div>${data.message}</div></div>`;
+        }
+    });
+});
+</script>
+{% endblock %}

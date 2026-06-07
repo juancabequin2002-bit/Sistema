@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% block page_title %}Lectura NFC{% endblock %}
+{% block page_subtitle %}Captura por NFC 13.56 MHz para dispositivos moviles compatibles y registro manual de respaldo.{% endblock %}
+{% block content %}
+<section class="rfid-screen rfid-screen-inline">
+    <div class="rfid-card rfid-card-wide scanner-card-accent scanner-nfc">
+        <div class="rfid-live-header">
+            <div class="rfid-icon"><i class="bi bi-phone"></i></div>
+            <div>
+                <h2>Consola de lectura NFC</h2>
+                <p>Usa un movil compatible para leer una etiqueta NFC o registra el codigo manualmente si el navegador no expone la API.</p>
+            </div>
+        </div>
+
+        <div class="scanner-status-strip" id="nfcStatus">
+            <i class="bi bi-info-circle"></i>
+            <span>Acerca un tag NFC al telefono y pulsa "Leer con NFC" si tu navegador lo soporta.</span>
+        </div>
+
+        <form method="post" class="rfid-form" id="nfcForm">
+            {{ form.hidden_tag() }}
+            {{ form.nfc_code(class="form-control form-control-lg rfid-input", placeholder="Lee o escribe el codigo NFC", autofocus=true, id="nfcCodeInput") }}
+            <div class="rfid-action-row">
+                <button type="button" class="btn btn-outline-primary btn-lg px-4" id="startNfcBtn">Leer con NFC</button>
+                {{ form.submit(class="btn btn-primary btn-lg px-4") }}
+                <a href="{{ url_for('create_asset', technology='nfc') }}" class="btn btn-light btn-lg">Ingreso manual</a>
+            </div>
+        </form>
+
+        <div class="rfid-help-grid">
+            <div class="help-card">
+                <strong>Android compatible</strong>
+                <span>Puede leer tags NFC desde navegador compatible con Web NFC.</span>
+            </div>
+            <div class="help-card">
+                <strong>iPhone</strong>
+                <span>Puede abrir flujos por URL NFC o usar ingreso manual mientras llega la app.</span>
+            </div>
+            <div class="help-card">
+                <strong>Si no existe</strong>
+                <span>Se crea el registro con el NFC precargado y compatibilidad con RFID o barras.</span>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const button = document.getElementById('startNfcBtn');
+    const input = document.getElementById('nfcCodeInput');
+    const form = document.getElementById('nfcForm');
+    const status = document.getElementById('nfcStatus');
+    if (!button || !input || !form || !status) return;
+
+    const setStatus = (message, level = 'info') => {
+        status.className = `scanner-status-strip status-${level}`;
+        status.innerHTML = `<i class="bi bi-info-circle"></i><span>${message}</span>`;
+    };
+
+    button.addEventListener('click', async () => {
+        if (!('NDEFReader' in window)) {
+            setStatus('Este navegador no expone Web NFC. Puedes ingresar el codigo manualmente o usar la futura app movil.', 'warning');
+            return;
+        }
+        try {
+            const reader = new NDEFReader();
+            await reader.scan();
+            setStatus('Escaneo NFC activo. Acerca la etiqueta al dispositivo.', 'success');
+            reader.onreading = (event) => {
+                const serial = event.serialNumber || '';
+                if (serial) {
+                    input.value = serial;
+                    setStatus(`Etiqueta NFC detectada: ${serial}`, 'success');
+                    form.requestSubmit();
+                } else {
+                    setStatus('Se detecto una etiqueta, pero no fue posible obtener el identificador.', 'warning');
+                }
+            };
+            reader.onerror = () => setStatus('Ocurrio un error durante la lectura NFC.', 'danger');
+        } catch (error) {
+            setStatus(`No fue posible iniciar NFC: ${error.message}`, 'danger');
+        }
+    });
+});
+</script>
+{% endblock %}

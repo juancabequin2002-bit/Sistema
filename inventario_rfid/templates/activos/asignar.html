@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block page_title %}Asignar activo{% endblock %}
+{% block page_subtitle %}Cambio de responsable con trazabilidad y registro historico.{% endblock %}
+{% block content %}
+<section class="card-panel">
+    <div class="mb-3"><strong>{{ asset.name }}</strong> | {{ asset.internal_code }} | Responsable actual: {{ asset.current_responsible }}</div>
+    <form method="post" class="row g-3">
+        {{ form.hidden_tag() }}
+        <div class="col-md-6">
+            <label class="form-label">{{ form.new_responsible.label }}</label>
+            {{ form.new_responsible(class="form-control") }}
+        </div>
+        <div class="col-12">
+            <label class="form-label">{{ form.observations.label }}</label>
+            {{ form.observations(class="form-control", rows="4") }}
+        </div>
+        <div class="col-12 d-flex gap-2">
+            {{ form.submit(class="btn btn-primary") }}
+            <a href="{{ url_for('asset_detail', asset_id=asset.id) }}" class="btn btn-light">Cancelar</a>
+        </div>
+    </form>
+</section>
+{% endblock %}

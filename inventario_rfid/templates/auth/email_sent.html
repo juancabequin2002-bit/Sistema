@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% block auth_content %}
+<section class="login-page">
+    <div class="login-card shadow-sm">
+        <div class="login-brand">
+            <span class="brand-chip">Correo</span>
+            <h1>{{ title }}</h1>
+            <p>{{ message }}</p>
+        </div>
+        <div class="alert alert-info mb-4">
+            Revisa tu bandeja de entrada y tambien spam o promociones si no ves el mensaje enseguida.
+        </div>
+        <div class="d-grid gap-2">
+            <a href="{{ url_for('login') }}" class="btn btn-primary btn-lg">Volver al inicio de sesion</a>
+            <a href="{{ url_for('resend_verification') }}" class="btn btn-light btn-lg">Reenviar verificacion</a>
+        </div>
+    </div>
+</section>
+{% endblock %}

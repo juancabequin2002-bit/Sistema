@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block page_title %}Lectura RFID{% endblock %}
+{% block page_subtitle %}Modo operativo de captura rapida para lectores USB 125 kHz que funcionan como teclado.{% endblock %}
+{% block content %}
+<section class="rfid-screen rfid-screen-inline">
+    <div class="rfid-card rfid-card-wide">
+        <div class="rfid-live-header">
+            <div class="rfid-icon"><i class="bi bi-upc-scan"></i></div>
+            <div>
+                <h2>Consola de lectura RFID</h2>
+                <p>Acerca la etiqueta al lector. El campo queda enfocado automaticamente y el sistema responde al instante.</p>
+            </div>
+        </div>
+
+        <div class="rfid-live-rings">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+
+        <form method="post" class="rfid-form">
+            {{ form.hidden_tag() }}
+            {{ form.rfid_code(class="form-control form-control-lg rfid-input", placeholder="Escanea o escribe el codigo RFID", autofocus=true) }}
+            <div class="rfid-action-row">
+                {{ form.submit(class="btn btn-primary btn-lg px-4") }}
+                <a href="{{ url_for('create_asset') }}" class="btn btn-light btn-lg">Ingreso manual</a>
+            </div>
+        </form>
+
+        <div class="rfid-help-grid">
+            <div class="help-card">
+                <strong>Si existe</strong>
+                <span>Se abre la hoja de vida del activo o archivo.</span>
+            </div>
+            <div class="help-card">
+                <strong>Si no existe</strong>
+                <span>Se redirige al formulario de creacion con RFID precargado.</span>
+            </div>
+            <div class="help-card">
+                <strong>Operacion continua</strong>
+                <span>Ideal para inventarios rapidos, expedientes y control de oficina.</span>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block page_title %}Alertas{% endblock %}
+{% block page_subtitle %}Centro funcional de seguimiento para mantenimientos, garantias y registros incompletos.{% endblock %}
+{% block content %}
+<section class="page-grid">
+    <div class="card-panel">
+        <div class="panel-header">
+            <h3>Proximos mantenimientos</h3>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-clean">
+                <thead><tr><th>Activo</th><th>Tipo</th><th>Fecha</th></tr></thead>
+                <tbody>
+                    {% for item in upcoming_maintenances %}
+                    <tr>
+                        <td><a href="{{ url_for('asset_detail', asset_id=item.asset.id) }}">{{ item.asset.name }}</a></td>
+                        <td>{{ item.maintenance_type }}</td>
+                        <td>{{ item.next_maintenance_date }}</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="3" class="text-center text-muted">Sin alertas de mantenimiento.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card-panel">
+        <div class="panel-header">
+            <h3>Garantias proximas</h3>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-clean">
+                <thead><tr><th>Activo</th><th>Garantia</th><th>Responsable</th></tr></thead>
+                <tbody>
+                    {% for item in upcoming_warranties %}
+                    <tr>
+                        <td><a href="{{ url_for('asset_detail', asset_id=item.id) }}">{{ item.name }}</a></td>
+                        <td>{{ item.warranty_until }}</td>
+                        <td>{{ item.current_responsible }}</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="3" class="text-center text-muted">Sin garantias proximas.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+<section class="page-grid mt-4">
+    <div class="card-panel">
+        <div class="panel-header">
+            <h3>Sin responsable</h3>
+        </div>
+        <ul class="simple-list">
+            {% for item in assets_without_responsible %}
+            <li><a href="{{ url_for('asset_detail', asset_id=item.id) }}">{{ item.internal_code }} - {{ item.name }}</a></li>
+            {% else %}
+            <li class="text-muted">No hay activos sin responsable.</li>
+            {% endfor %}
+        </ul>
+    </div>
+    <div class="card-panel">
+        <div class="panel-header">
+            <h3>Sin ubicacion</h3>
+        </div>
+        <ul class="simple-list">
+            {% for item in assets_without_location %}
+            <li><a href="{{ url_for('asset_detail', asset_id=item.id) }}">{{ item.internal_code }} - {{ item.name }}</a></li>
+            {% else %}
+            <li class="text-muted">No hay activos sin ubicacion.</li>
+            {% endfor %}
+        </ul>
+    </div>
+</section>
+{% endblock %}
