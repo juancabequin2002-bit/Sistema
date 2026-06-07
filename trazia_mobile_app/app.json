@@ -1,0 +1,39 @@
+{
+  "expo": {
+    "name": "TRAZIA RFID",
+    "slug": "trazia-rfid-mobile",
+    "scheme": "trazia-rfid",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/app-icon.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0B111A"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.trazia.rfid",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Se necesita acceso a la camara para escanear codigos de barras y QR de los activos.",
+        "NFCReaderUsageDescription": "Se necesita NFC para leer etiquetas de activos."
+      },
+      "entitlements": {
+        "com.apple.developer.nfc.readersession.formats": ["NDEF"]
+      }
+    },
+    "android": {
+      "package": "com.trazia.rfid",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0B111A"
+      },
+      "permissions": ["CAMERA", "NFC"]
+    },
+    "plugins": ["react-native-nfc-manager"],
+    "web": {
+      "bundler": "metro"
+    }
+  }
+}
